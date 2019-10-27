@@ -1,0 +1,20 @@
+1.user_account 新增字段 is_upper_score 记录玩家是否有上分记录 ----- at 2019-09-27 by xwb
+2.user_monitor 新增字段 today_kill_number_gt ，today_kill_number_lt  今日杀数 ----- at 2019-09-27 
+3.platformInfo 新增字段 rate   平台分成比例             ------ at 2019-09-28
+4.platformInfo 新增字段 coin_type   钱币类型             ------ at 2019-09-29
+5.agent_data 新增字段 platform_id 平台id                 ------ at 2019-09-29 
+6.game_info 删除字段 game_sort 排序, game_tag 标签       ------ at 2019-09-29 
+7.platform_data 更新create_time 数据类型为 DATE类型 新增status 交收状态:0-无交收 1-已交收  rate:历史分成比例      ----at 2019-09-29
+8.user_kill_record 新增字段 operator 操作人   ------ at 2019-09-30
+9.menu表 (会员管理下的会员管理更改为会员列表)   ------ at 2019-09-30
+10.horselight表 新增字段is_delete 软删除 ------ at 2019-10-08
+11.admin表 新增字段is_delete 软删除 ------ at 2019-10-08
+12.role表 新增字段is_delete 软删除 ------ at 2019-10-08
+13.menu表 新增字段is_delete 软删除 ------ at 2019-10-08
+14.adminWhitelist表 新增字段 is_delete 软删除 ------ at 2019-10-08
+15.新增recycle_bin表 回收站 ------ at 2019-10-08
+16.user_monitor新增 today_bet_number 和h_today_bet_number  两个字段 at 2019-10-09
+17.recycle_bin表 date字段类型改为datetime ------ at 2019-10-09
+18.platformInfo 修改rate属性为float       -----at 2019-10-09
+19.agent_data 新增 rate 交收时的比例 settlement 交收时的金额 status 交收状态 ----at 2019-10-10
+20.user_account 表 新增 is_bet 字段 tinyint 5 表示是否投注

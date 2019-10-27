@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+    <div class="layui-form">
+            <div class="layui-row">
+                <div class="layui-col-md3" style="text-align: left">
+                    <div class="layui-input-inline btm_width_70">
+                        <% if( childMenu.includes('bt1') ){ %> 
+                            <button type="button" class="layui-btn" id="monitor_setting">监控设置</button>
+                        <% } %> 
+                    </div>
+                </div>
+
+          
+                <div class="layui-col-md9" style="text-align: right">
+                        <div class="layui-input-inline"  style=" width: 150px;">
+                            <input type="text" id="username" class="layui-input" placeholder="机器人id">
+                        </div>
+                        
+                        <div class="layui-input-inline btm_width_140">
+                                <button type="button" class="layui-btn" id="search">搜索</button>
+                                <button type="button" class="layui-btn" onclick="exportFile()">导出</button>
+                        </div>
+                </div>
+                </div>
+            </div>
+            <input type="hidden" id="detail_log_username" value="">
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+<div id="monitoPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="s_user_id" class="layui-input">
+        <div class="layui-form-item">
+            <label class="layui-form-label">投注</label>
+            <div class="layui-input-block">
+                <input type="number" id="valid_bet" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">局数</label>
+            <div class="layui-input-block">
+                <input type="number" id="count" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">输赢</label>
+            <div class="layui-input-block">
+                <input type="number" id="win_lost" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">赢</label>
+            <div class="layui-input-block">
+                <input type="number" id="win_gold" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">输</label>
+            <div class="layui-input-block">
+                <input type="number" id="lost_gold" class="layui-input">
+            </div>
+        </div>
+
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveMonitor()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="popup" id="detailLogInit">
+        <div style="float: right;">       
+            <div class="layui-form">
+                <div class="layui-inline">
+                    <div class="layui-input-inline"  style=" width: 150px;">
+                        <input type="text" id="s_game_no" class="layui-input" placeholder="牌局编号">
+                    </div>
+                </div>
+
+                <div class="layui-input-inline" style="width: 160px;">
+                    <input type="text" id="s_start_time" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-input-inline" >
+                    <span>-</span>
+                </div>
+                   
+                <div class="layui-input-inline" style="width: 160px;">
+                    <input type="text" id="s_end_time" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                </div>
+
+                <div class="layui-input-inline btm_width_70">
+                        <button type="button" class="layui-btn" id="detail_search">搜索</button>
+                </div>
+
+                <div class="layui-input-inline btm_width_70">
+                        <button type="button" class="layui-btn" onclick="detailExport()" >导出</button>
+                </div>
+            </div>
+        </div>
+        <br>
+        <br>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="detail_tables" lay-filter="detail_tables"></table>
+        </div>
+        
+</div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<script type="text/javascript" src="/public/admin/js/myExcel.js"></script>
+<script type="text/javascript" src="/public/admin/js/xlsx.core.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var robotMonitor = JSON.parse('<%-robotMonitor%>')
+        var form, layer , table , indexPopup ,tableObj ;
+        $(function(){
+            layui.use(['form','layer','laydate','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+
+                laydate.render({
+                    elem: '#s_start_time',
+                    type:"datetime",
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    value: ''
+                });
+                laydate.render({
+                    elem: '#s_end_time',
+                    type:"datetime",
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    value: ''
+                });
+                initData(); 
+            });
+
+
+
+            $("#search").click(function(){
+                initData();
+            })
+            $("#detail_search").click(function() {
+                var username = $("#detail_log_username").val()
+                detailLogInit(username)
+            })
+            $("#monitor_setting").click(function(){
+                openMonitorPopup();
+            })
+        })
+
+
+        function exportFile () {
+            $.ajax({
+                url:'/admin/operateManage/robot/export',
+                type:"GET",
+                data:{
+                    username:$("#username").val(),
+                    _csrf:$("#_csrf").val()
+                },
+                timeout: 60000, //1分钟
+                success: function(data){
+                    var rows = data.data
+                    exportSpecialExcel(rows,'机器人设置')
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                }
+            })
+        }
+
+        function detailExport() {
+            $.ajax({
+                url:'/admin/operateManage/robot/detailExport',
+                type:"GET",
+                data:{
+                    username: $("#detail_log_username").val(),
+                    game_no:$('#s_game_no').val(),
+                    start_time:$('#s_start_time').val(),
+                    end_time:$('#s_end_time').val(),
+                    _csrf:$("#_csrf").val()
+                },
+                timeout: 60000, //1分钟
+                success: function(data){
+                    var rows = data.data
+                    exportSpecialExcel(rows,'详情日志')
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                }
+            })
+        }
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '机器人设置', //导出数据时的文件名
+                url:'/admin/riskManagement/robot/list',
+                where:{
+                    username:$("#username").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'username', title: '机器人id', align:'center',sort: true},
+                    {field:'count', title: '局数', align:'center',sort: true, templet: function(row) {
+                        if(Number(row.total_games) > Number(robotMonitor.count)){
+                            return "<span style='color:red'>"+ row.total_games +"</span>"
+                        } else {
+                            return row.total_games
+                        }
+                    }},
+                    {field:'valid_bet', title: '投注', align:'center',sort: true, templet: function(row) {
+                        if(Number(row.valid_bet / 100) > Number(robotMonitor.valid_bet)){
+                            return "<span style='color:red'>"+ (row.valid_bet/100).toFixed(2)+"</span>"
+                        } else {
+                            return (row.valid_bet/100).toFixed(2)
+                        }
+                    }},
+                    {field:'win_lost', title: '输赢', width:80, align:'center', templet: function(row) {
+                        var win_lost =  parseInt(row.win_gold) - parseInt(row.lost_gold);
+                        if(Number(win_lost / 100) > Number(robotMonitor.lost_gold)){
+                            return "<span style='color:red'>"+ (win_lost/100).toFixed(2)+"</span>"
+                        } else {
+                            return (win_lost/100).toFixed(2)
+                        }
+                    }},
+                    {field:'lost_gold', title: '输',align:'center',sort: true,templet: function(row) {
+                        if(Number(row.lost_gold / 100) > Number(robotMonitor.lost_gold)){
+                            return "<span style='color:red'>"+ (row.lost_gold/100).toFixed(2)+"</span>"
+                        } else {
+                            return (row.lost_gold/100).toFixed(2)
+                        }
+                    }},
+                    {field:'win_gold', title: '赢',align:'center',sort: true,templet: function(row) {
+                        if(Number(row.win_gold / 100) > Number(robotMonitor.win_gold)){
+                            return "<span style='color:red'>"+ (row.win_gold/100).toFixed(2) +"</span>"
+                        } else {
+                            return (row.win_gold/100).toFixed(2)
+                        }
+                    }},
+                    {field:'', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            var cz ="";
+                            cz +=  `<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' id='bianji' onclick='detailLog("${row.username}")'>详情日志</button> <% } %>`
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+            currentData = null;
+            //监听行单击事件（单击事件为：rowDouble）
+            table.on('row(tables)', function(obj){
+                var data = obj.data;
+                currentData = data;
+                //标注选中样式
+                obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+            });
+        }
+        
+
+        function detailLog(username) {
+            $("#detail_log_username").val(username)
+            var table =layer.open({
+                type: 1,
+                shade: false,
+                maxmin: true,
+                content: $("#detailLogInit"),
+                title: '详情日志',
+                area: ['100%', '100%'],
+            });
+            detailLogInit(username);
+        }
+
+        function detailLogInit(username) {
+            tableObj = table.render({
+                elem: '#detail_tables',
+                title: '机器人日志详情', 
+                url:'/admin/riskManagement/robot/detailLog',
+                where:{
+                    username: username,
+                    game_no:$('#s_game_no').val(),
+                    start_time:$('#s_start_time').val(),
+                    end_time:$('#s_end_time').val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                limit:10,
+                cols: [[
+                    {field:'create_time', title: '日期', align:'center',sort: true},
+                    {field:'game_no', title: '牌局编号', align:'center',sort: true},
+                    {field:'game_name', title: '游戏名称', align:'center',sort: true},
+                    {field:'name_list', title: '参与id', width:80, align:'center'},
+                    {field:'valid_bet', title: '投注',align:'center',sort: true, templet: function(row){
+                        return (row.valid_bet/100).toFixed(2)
+                    }},
+                    {field:'profit', title: '输赢',align:'center',sort: true,templet: function(row){
+                        return (row.profit/100).toFixed(2)
+                    }},
+                ]]
+            });   
+        }
+
+        function openMonitorPopup(){
+            $("#valid_bet").val(robotMonitor.valid_bet);
+            $("#count").val(robotMonitor.count);
+            $("#win_lost").val(robotMonitor.win_lost);
+            $("#win_gold").val(robotMonitor.win_gold);
+            $("#lost_gold").val(robotMonitor.lost_gold);
+
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 0, //不显示关闭按钮
+                title: '监控设置',
+                anim: 2,
+                area: ['500px', '420px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#monitoPopup")
+            }); 
+        }
+
+        function saveMonitor(){
+            var valid_bet = $("#valid_bet").val();
+            var count = $("#count").val();
+            var win_lost = $("#win_lost").val();
+            var win_gold = $("#win_gold").val();
+            var lost_gold = $("#lost_gold").val();
+            
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/riskManagement/robot/saveMonitor",
+                type:"POST",
+                data:{
+                    "valid_bet" : valid_bet,
+                    "count":count,
+                    "win_lost":win_lost,
+                    "win_gold":win_gold,
+                    "lost_gold":lost_gold,
+                    _csrf:$("#_csrf").val()
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        closePopup();
+                        robotMonitor.valid_bet = valid_bet;
+                        robotMonitor.win_gold = win_gold;
+                        robotMonitor.lost_gold = lost_gold;
+                        robotMonitor.count = count;
+                        robotMonitor.win_lost = win_lost;
+                        initData()
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#valid_bet").val("");
+            $("#win_gold").val("");
+            $("#lost_gold").val("");
+            $("#count").val("");
+            $("#win_lost").val("");
+        }
+
+    </script>      
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+   
+</head>
+<body>
+    
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <div class="layui-row">
+                    <div class="layui-col-md4" style="text-align: left">
+                        <div class="layui-input-inline btm_width_100">
+                            <% if( childMenu.includes('bt1') ){ %> 
+                                <button type="button" class="layui-btn" onclick="openWhitelistPopup(0)">添加白名单</button>
+                            <% } %> 
+                                
+                        </div>
+                    </div>
+
+                <div class="layui-col-md8" style="text-align: right">
+                        <% if( childMenu.includes('bt2') ){ %> 
+                            <div class="layui-input-inline" style="width: 250px">
+                                    <input type="text" id="s_ip"  placeholder="IP地址" class="layui-input">
+                            </div>
+                            <div class="layui-input-inline btm_width_70">
+                                    <button type="button" class="layui-btn" id="search">搜索</button>
+                            </div>
+                        <% }else{%>  
+                            <input type="hidden" id="s_ip" >
+                        <% } %> 
+                </div>
+            </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+                <span style="float: right;color:#a1a1a1">注:配置IP白名单之后将只有白名单上的IP地址才能登录后台系统,不配置白名单默认所有IP都可以登录！</span>
+                <br/>
+            </div>
+        </div>
+
+</body>
+
+<div id="WhitelistPopup" class="popup">
+    <div class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">IP地址</label>
+            <div class="layui-input-block">
+                <input type="hidden" id="action" class="layui-input">
+                <input type="hidden" id="id" class="layui-input">
+                <input type="text" id="ip" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" id="passwordItem">
+            <label class="layui-form-label">描述</label>
+            <div class="layui-input-block">
+                <textarea id="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveWhitelist()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup ;
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+
+        function initData(){
+            var game_id = $("#s_game_id").val();
+
+            tableObj = table.render({
+                elem: '#tables',
+                title: '白名单管理', //导出数据时的文件名
+                url:'/admin/systemSetting/whitelistManage/list',
+                where:{
+                    ip:$("#s_ip").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'ip', title: 'ip地址', align:'center',sort: true},
+                    {field:'description', title: '描述', align:'center'},
+                    {field:'create_operator', title: '创建人', align:'center'},
+                    {field:'create_time',title: '创建时间', sort: true, align:'center'},
+                    {field:'cz', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            var cz='';
+                            cz+="<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openWhitelistPopup(1,"+row.id+")'>编辑</button> <% } %> ";
+                            cz+="<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='deleteWhitelist("+row.id+",\""+row.ip+"\")'>删除</button> <% } %> ";
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+        }
+      
+        function openWhitelistPopup(action,id){
+            $("#action").val(action);
+            if( action == 0 ){
+                indexPopup = layer.open({
+                    type: 1,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 1, //显示关闭按钮1
+                    cancel: function(index, layero){
+                        closePopup();
+                    },
+                    title: '添加白名单',
+                    anim: 2,
+                    area: ['500px', '320px'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: $("#WhitelistPopup")
+                });
+            }else if( action == 1 ){
+                $.ajax({
+                    url:"/admin/systemSetting/whitelistManage/get",
+                    type:"POST",
+                    data:{
+                        id:id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        console.log("data:",data);
+                        if(data.status == 0){
+                            $("#id").val(data.adminWhitelist.id);
+                            $("#ip").val(data.adminWhitelist.ip);
+                            $("#description").val(data.adminWhitelist.description);
+                            indexPopup = layer.open({
+                                type: 1,
+                                skin: 'layui-layer-demo', //样式类名
+                                closeBtn: 1, //显示关闭按钮1
+                                cancel: function(index, layero){
+                                    closePopup();
+                                },
+                                title: '编辑白名单',
+                                anim: 2,
+                                area: ['500px', '320px'],
+                                shadeClose: false, //开启遮罩关闭
+                                content: $("#WhitelistPopup")
+                            });
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                    }
+                })
+            }   
+        }
+
+        function saveWhitelist(){
+            var action = $("#action").val();
+            var id = $("#id").val();
+            var ip = $("#ip").val().trim();
+            var description = $("#description").val().trim();
+            if( !vilidParamLength(ip,50,"ip长度不超过50") ||  !vilidParamLength(description,300,"描述长度不超过300")) return;
+            if( ip == "" ){
+                layer.msg('IP地址不能为空！');
+                return;
+            }
+            
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/systemSetting/whitelistManage/saveWhitelist",
+                type:"POST",
+                data:{
+                    action:action,
+                    id:id,
+                    ip:ip,
+                    description:description,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function deleteWhitelist(id,ip){
+            layer.confirm("是否确认删除<span style='color:red'> "+ip+" </span>这条IP地址？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/systemSetting/whitelistManage/deleteWhitelist",
+                    type:"POST",
+                    data:{id:id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            reloadTable();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#action").val("");
+            $("#id").val("");
+            $("#ip").val("");
+            $("#description").val("");
+        }
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                ip:$("#s_ip").val(),
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+       
+            
+    </script>      
+</html>

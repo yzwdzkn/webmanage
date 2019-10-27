@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px; ">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <!-- <table class="layui-hide" id="tables" lay-filter="tables"></table> -->
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 100px">当前全局杀数</label>
+                <div class="layui-input-block" >
+                    <span class="layui-form-label" id='killRate' style="margin-left:60px;text-align: left"><%= (killRate * 100).toFixed(2) +'%' %></span>
+                </div>
+            </div>
+            <!-- <br/> -->
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 100px">预期全局杀数</label>
+                <div class="layui-input-block" >
+                    <span class="layui-form-label" id='kill_number' style="margin-left:60px;text-align: left"><%= kill ? (kill.kill_number).toFixed(2)+'%' : '0%' %></span>
+                    <% if( childMenu.includes('bt1') ){ %> 
+                        <button type="button" class="layui-btn" id="setting" style="margin-left:60px;">设置</button>
+                    <% } %>  
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 100px">当前全局追杀</label>
+                <div class="layui-input-block" >
+                    <span class="layui-form-label" id='killStatus' style="margin-left:60px;text-align: left"><%= killStatus==0?'开启':'关闭'%></span>
+                    <% if( childMenu.includes('bt1') ){ %> 
+                        <button type="button" class="layui-btn" id="setKillStatus" style="margin-left:60px;">设置</button>
+                    <% } %>  
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="width: 100px">当前全局放水</label>
+                <div class="layui-input-block" >
+                    <span class="layui-form-label" id='waterStatus' style="margin-left:60px;text-align: left"><%= waterStatus==0?'开启':'关闭'%></span>
+                    <% if( childMenu.includes('bt1') ){ %> 
+                        <button type="button" class="layui-btn" id="setWater" style="margin-left:60px;">设置</button>
+                    <% } %>  
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+</body>
+
+<div id="settingKillPopup" class="popup">
+    <div class="layui-form" action="">
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">杀数</label>
+            <div class="layui-input-block">
+                <input type="number" id="e_kill_number" class="layui-input">
+                <span style="color: #777">注：50 等于 50%,杀数限2%-5%</span>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveKill()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="setKillStatusPopup" class="popup">
+    <div class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label" style='width:120px'>当前全局追杀状态</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="s_kill_status" value="0" title="开启" checked>
+                <input type="radio" name="s_kill_status" value="1" title="关闭">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveKillStatus()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="setWaterStatusPopup" class="popup">
+    <div class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label" style='width:120px'>当前全局放水状态</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="s_water_status" value="0" title="开启" checked>
+                <input type="radio" name="s_water_status" value="1" title="关闭">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveWaterStatus()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var layer , indexPopup,form ;
+        $(function(){
+            layui.use(['layer','form'], function(){
+                layer = layui.layer;
+                form = layui.form  
+            });
+
+            $("#setting").click(function(){
+                settingKill();
+            });
+
+            $("#setKillStatus").click(function(){
+                setKillStatus();
+            });
+
+            $("#setWater").click(function(){
+                setWater();
+            });
+
+            let killstatus = '<%= killStatus%>'
+            let waterStatus = '<%= waterStatus%>'
+
+            $("input[name='s_kill_status'][value='"+killstatus+"']").prop("checked",true);
+            $("input[name='s_water_status'][value='"+waterStatus+"']").prop("checked",true);
+        })
+
+        
+        function settingKill(){
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                cancel: function(index, layero){
+                    closePopup();
+                },
+                title: '预期杀数设置',
+                anim: 2,
+                area: ['500px', '240px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#settingKillPopup")
+            });
+        }
+
+        function setKillStatus() {
+            // $("input[name='s_kill_status'value='"+data.platform.status+"']").prop("checked",true);
+            // $("input[name='s_kill_status']:checked")
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                cancel: function(index, layero){
+                    closePopup();
+                },
+                title: '当前全局杀放状态设置',
+                anim: 2,
+                area: ['400px', '240px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#setKillStatusPopup")
+            });
+        }
+
+        function setWater() {
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                cancel: function(index, layero){
+                    closePopup();
+                },
+                title: '当前全局放水状态设置',
+                anim: 2,
+                area: ['400px', '240px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#setWaterStatusPopup")
+            });
+        }
+
+        function saveKill(){
+            var kill_number = $("#e_kill_number").val();
+
+            if (kill_number < 2 || kill_number >5) {
+                layer.msg('杀数限2%-5%');
+                return;
+            }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/riskManagement/globalKill/saveKill",
+                type:"POST",
+                data:{
+                    "kill_number" : kill_number,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        $("#kill_number").text(parseFloat(kill_number).toFixed(2) + "%")
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function saveKillStatus() {
+            var status =  $("input[name='s_kill_status']:checked").val();
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/riskManagement/globalKill/saveKillStatus",
+                type:"POST",
+                data:{
+                    "status" : status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        $("#killStatus").text(status==0?'开启':'关闭')
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                        closePopup();
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function saveWaterStatus() {
+            var status =  $("input[name='s_water_status']:checked").val();
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/riskManagement/globalKill/saveWaterStatus",
+                type:"POST",
+                data:{
+                    "status" : status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        $("#waterStatus").text(status==0?'开启':'关闭')
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                        closePopup();
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#e_kill_number").val("");
+        }
+
+    </script>      
+</html>

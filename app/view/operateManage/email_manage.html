@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+
+    
+    <div style="padding: 15px;">
+        <div class="layui-card">
+            <div class="card-header">
+                <span class="spanTitle"><%=title%></span>
+                <br/>
+
+                <div class="layui-form">
+                        <div class="layui-row">
+                        <div class="layui-input-inline btm_width_100">
+                                <button type="button" class="layui-btn" onclick="openEmailPopup(0)">添加邮件</button>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+    </div>
+    
+</body>
+<div id="saveEmailPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="action" class="layui-input">
+        <input type="hidden" id="id" class="layui-input">
+            <div class="layui-form-item">
+                <label class="layui-form-label">收件人ID</label>
+                <div class="layui-input-block">
+                    <textarea name="addressee_id" id="addressee_id" cols="45" rows="5" placeholder="多人发送用英文,隔开; 发送给全部玩家 填0" ></textarea>
+                    <!-- <input type="text" id="addressee_id" placeholder="多人发送用英文,隔开" class="layui-input"> -->
+                </div>
+            </div>             
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮件标题</label>
+            <div class="layui-input-block">
+                <input type="text" id="title" class="layui-input">
+            </div>
+        </div>  
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮件内容</label>
+            <div class="layui-input-block">
+                <textarea name="email_content" id="email_content" cols="45" rows="10"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveEmail()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ;
+        $(function(){
+            layui.use(['element','form','layer','table','laydate'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                var laydate = layui.laydate;
+                initData();  
+                laydate.render({
+                 elem: '#send_time', //指定元素
+                 format:"yyyy-MM-dd HH:mm:ss"
+                 ,type: 'datetime'
+                });  
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+
+        function initData(){
+            tableObj=table.render({
+                elem: '#tables',
+                title: '邮件管理', //导出数据时的文件名
+                url:'/admin/operateManage/emailManage/list',
+                where:{
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    //表格
+                    {field:'addressee_id', title: '收件人ID', align:'center',sort:true},
+                    {field:'email_title', title: '邮件标题', align:'center'},
+                    {field:'email_content', title: '邮件内容', align:'center'},
+                    {field:'send_time', title: '寄送时间', align:'center'},
+                    {field:'cz', title: '操作',align:'center',width:150,
+                        templet: function(row){
+                            if(row.send_type == 1){
+                                return '<span style="color:red">已发送</span>';
+                            } else {
+                                return '未发送';
+                            }
+                            return "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openEmailPopup(1,\""+row.id+"\",\""+row.addressee_id+"\",\""+row.email_title+"\",\""+row.email_content+"\")'>编辑</button><button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='delEmail("+row.id+",\""+row.email_title+"\")'>删除</button><button type='button' class='layui-btn layui-btn-xs' onclick='sendEmail("+row.id+",\""+row.email_title+"\")'>发送</button>";
+                        }
+                    },
+                    {field:'operation_username', title: '操作账号', align:'center'},
+                    {field:'', title: '操作', align:'center',
+                        templet: function(row){
+                            if(row.send_type == 0){
+                                return "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openEmailPopup(1,\""+row.id+"\",\""+row.addressee_id+"\",\""+row.email_title+"\",\""+row.email_content+"\")'>编辑</button><button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='delEmail("+row.id+",\""+row.email_title+"\")'>删除</button><button type='button' class='layui-btn layui-btn-xs' onclick='sendEmail("+row.id+",\""+row.email_title+"\")'>发送</button>";
+                            }
+                            return '';
+                        }
+                    },
+                ]]
+            });
+        }
+        /**
+         * 添加和编辑分享内容
+         * 如果action==0做添加操作
+         * 如果action==1做修改操作
+         */
+
+        function openEmailPopup(action,id,addressee_id,title,email_content,){                        
+            $("#action").val(action);
+            if( action == 0 ){
+                indexPopup = layer.open({
+                    type: 1,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 0, //不显示关闭按钮
+                    title: '添加邮件',
+                    anim: 2,
+                    area: ['500px', '600px'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: $("#saveEmailPopup")
+                });
+            }else if( action == 1 ){
+
+                //编辑时把值显示在编辑页面上
+                $("#addressee_id").val(addressee_id);
+                $("#title").val(title);
+                $("#email_content").val(email_content);
+                $("#id").val(id);
+                form.render(); 
+                indexPopup = layer.open({
+                    type: 1,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 0, //不显示关闭按钮
+                    title: '编辑',
+                    anim: 2,
+                    area: ['500px', '600px'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: $("#saveEmailPopup")
+                });
+
+            }   
+        }
+        /**
+         * 提交邮件
+         */
+        function saveEmail(){
+            var addressee_id = $("#addressee_id").val().trim();
+            var title=$("#title").val();
+            var email_content =  $("#email_content").val();
+            var _csrf = $("#_csrf").val();
+            var action= $("#action").val();
+            if( !vilidParamLength(addressee_id,20,"收件人ID长度不能超过20") || !vilidParamLength(title,100,"标题长度不能超过100") || !vilidParamLength(email_content,255,"内容长度不能超过255")) return;
+            if(addressee_id == ''){
+                layer.msg('收件人ID不能为空');
+                return
+            }
+            if(title == ''){
+                layer.msg('标题不能为空');
+                return;
+            }
+            if(email_content == ''){
+                layer.msg('内容不能为空');
+                return ;
+            }
+            $.ajax({
+                url:"/admin/operateManage/emailManage/saveEmail",
+                type:"POST",
+                data: {
+                    addressee_id:addressee_id,
+                    title:title,
+                    email_content:email_content,
+                    action: action,
+                    id:$('#id').val(),
+                    _csrf: _csrf,
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                }
+            })
+        }
+
+        /**
+         *删除邮件
+         */
+        function delEmail(id,title){
+            layer.confirm("是否确认删除<span style='color:red'> "+title+" </span>这条邮件？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/operateManage/emailManage/delEmail",
+                    type:"POST",
+                    data:{id:id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            reloadTable();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+        function sendEmail(id,title){
+            layer.confirm("是否确认发送<span style='color:red'> "+title+" </span>这条邮件？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/operateManage/emailManage/sendEmail",
+                    type:"POST",
+                    data:{id:id,
+                        send_time:new Date(),
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            reloadTable();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+           /**
+         * 点击取消清空数据
+         */
+         function closePopup(){
+            layer.close(indexPopup);
+            $("#addressee_id").val('');
+            $("#send_time").val('');
+            $("#title").val('');
+            $("#email_content").val('');
+            $('#id').val('');
+            $("#action").val('');
+            form.render(); 
+        }
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+    </script>      
+</html>

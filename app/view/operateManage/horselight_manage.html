@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+   
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+
+</head>
+
+<body>
+
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <!-- <i class="ti-help-alt" id='help'>
+                </i> -->
+                <div class="layui-form">
+                    <div class="layui-row">
+                        <div class="layui-col-md3">
+                            <div class="layui-input-inline btm_width_100">
+                                <button type="button" class="layui-btn" onclick="openHorselightPopup(0)">添加</button>
+                            </div>
+                        </div>
+                        <div class="layui-form" style="text-align: right">
+                            <div class="layui-inline" style="text-align: left">
+                                <div class="layui-input-block" style=" width: 180px;margin-left: 20px;">
+                                    <select id="s_game_id" lay-filter="s_game_id">
+                                        <option value="0" selected="">所有游戏</option>
+                                        <% gameData.forEach(function(item){%>
+                                        <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-input-inline" style="width: 120px;margin-left: 5px;">
+                                <input type="text" id="s_title" placeholder="标题/关键字" class="layui-input">
+                            </div>
+
+                            <div class="layui-input-inline btm_width_70">
+                                <button type="button" class="layui-btn" id="search">搜索</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+            <div id='tips-content' style="display: none">
+                <div style="width: 500px" class='tips-content'>
+                    <div><b>内容</b>: 内容可以用color标签包裹来改变颜色</div>
+                </div>
+            </div>
+        </div>
+
+</body>
+<div id="HorselightPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="action" class="layui-input">
+        <input type="hidden" id="id" class="layui-input">
+        <div class="layui-form-item">
+            <label class="layui-form-label">开启时间</label>
+            <div class="layui-input-inline" style="width: 160px;">
+                <input type="text" id="start_time" lay-verify="date" placeholder="开始时间" autocomplete="off"
+                    class="layui-input" readonly>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">关闭时间</label>
+            <div class="layui-input-inline" style="width: 160px;">
+                <input type="text" id="stop_time" lay-verify="date" placeholder="关闭时间" autocomplete="off"
+                    class="layui-input" readonly>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">标题</label>
+            <div class="layui-input-block">
+                <input type="text" id="title" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">游戏</label>
+            <div class="layui-input-block">
+                <select id="game">
+                    <option value="全局">全局</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">间隔</label>
+            <div class="layui-input-block">
+                <input type="text" id="interval" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">内容</label>
+            <div class="layui-input-block">
+                <textarea id="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveHorselight()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+<script>
+    let tipsContent = $("#tips-content").html();
+    var form, layer, table, indexPopup;
+    $(function () {
+        layui.use(['element', 'form', 'layer', 'table', 'laydate'], function () {
+            form = layui.form;
+            table = layui.table;
+            layer = layui.layer;
+            var element = layui.element;
+            var laydate = layui.laydate;
+            initData();
+            laydate.render({
+                elem: '#start_time', //指定元素
+                format: "yyyy-MM-dd HH:mm:ss"
+                , type: 'datetime'
+            });
+            laydate.render({
+                elem: '#stop_time', //指定元素
+                format: "yyyy-MM-dd HH:mm:ss"
+                , type: 'datetime'
+            });
+        });
+
+        $("#search").click(function () {
+            initData();
+        });
+
+    })
+
+    $("#help").mouseover(function () {
+        openMsg()
+        // $("#help-content").attr('style','display: block')
+    })
+
+    $("#help").mouseout(function () {
+        layer.close(subtips);
+        // $("#help-content").attr('style','display: none')
+    })
+
+
+    function openMsg() {
+        subtips = layer.tips(tipsContent, '#help', { tips: [1, '#2894FF'], time: 30000, area: ['auto', 'auto'] });
+    }
+
+    function initData() {
+        tableObj = table.render({
+            elem: '#tables',
+            title: '跑马灯管理', //导出数据时的文件名
+            url: '/admin/operateManage/horselightManage/list',
+            where: {
+                game_id: $("#s_game_id").val(),
+                title: $("#s_title").val(),//搜索传入的值
+                _csrf: $("#_csrf").val()
+            }, //其他请求参数
+            page: true,
+            cols: [[
+                //表格
+                { field: 'start_time', title: '开始时间', sort: true, align: 'center', width: 200 },
+                { field: 'stop_time', title: '结束时间', sort: true, align: 'center', width: 200 },
+                { field: 'title', title: '标题', align: 'center', sort: true, width: 100 },
+                {
+                    field: 'game_id', title: '游戏', align: 'center', sort: true, width: 100,
+                    templet: function (row) {
+                        if (row.game_id === 0) {
+                            return "全局"
+                        } else {
+                            return row.game_info ? row.game_info.game_name : "未知";
+                        }
+                    },
+                },
+                { field: 'description', title: '内容', align: 'center'},
+                { field: 'interval', title: '间隔', align: 'center', width: 100 },
+                // { field: 'create_operator', title: '创建人', align: 'center', width: 100 },
+                // { field: 'create_time', title: '创建时间', sort: true, align: 'center', width: 160 },
+                { field: 'revise_operator', title: '修改人', align: 'center', width: 100 ,
+                    templet: function (row) {
+                        if(row.revise_operator==null){
+                            return row.create_operator;
+                        }else{
+                            return row.revise_operator;
+                        }
+                    }
+                },
+                { field: 'revise_time', title: '修改时间', sort: true, align: 'center', width: 200 ,
+                    templet: function (row) {
+                            if(row.revise_time==null){
+                                return row.create_time;
+                            }else{
+                                return row.revise_time;
+                            }
+                        }
+                },
+                {
+                    field: 'status', title: '状态', width: 180, sort: true, align: 'center', width: 120,
+                    templet: function (row) {
+                        if (row.status === 0) {
+                            return "开启";
+                        } else if (row.status === 1) {
+                            return "<span style='color:red'>关闭</span>";
+                        }
+                    },//判断字体颜色
+                },
+                {
+                    field: 'cz', title: '操作', align: 'center', width: 200,
+                    templet: function (row) {
+                        var cz = "";
+                        if (row.status === 0) {
+                            cz += "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='changeStatus(" + row.id + ",\"" + row.title + "\",\"" + row.status + "\")'>停止</button>";
+                        } else if (row.status === 1) {
+                            cz += "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='changeStatus(" + row.id + ",\"" + row.title + "\",\"" + row.status + "\")'>开启</button>";
+                        }
+                        cz += "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openHorselightPopup(1," + row.id + ")'>编辑</button>";
+                        cz += "<button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='deleteHorselight(" + row.id + ",\"" + row.title + "\")'>删除</button>";
+                        return cz;
+                    }
+                }
+            ]]
+
+        });
+    }
+
+    function openHorselightPopup(action, id) {
+        $.ajax({
+            url: "/admin/operateManage/horselightManage/findGame",//路由地址
+            type: "POST",//请求
+            data: {
+                _csrf: $("#_csrf").val()
+            },
+            timeout: 60000, //1分钟
+            success: function (data) {
+                console.log("data:", data);
+                if (data.status === 0) {
+                    $("#game").empty().append('<option value="0" selected="">全局</option>');//替换后面内容的方法
+                    for (var i = 0; i < data.games.length; i++) {
+                        $("#game").append('<option value="' + data.games[i].game_id + '">' + data.games[i].game_name + '</option>');
+                    }
+                    form.render('select');
+
+                    $("#action").val(action);
+                    if (action === 0) {
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '添加跑马灯',
+                            anim: 2,
+                            area: ['500px', '580px'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#HorselightPopup")
+                        });
+                    } else if (action === 1) {
+                        $.ajax({
+                            url: "/admin/operateManage/horselightManage/get",
+                            type: "POST",
+                            data: {
+                                id: id,
+                                _csrf: $("#_csrf").val()
+                            },
+                            timeout: 60000, //1分钟
+                            success: function (data) {
+                                console.log("data:", data);
+                                if (data.status === 0) {
+                                    //编辑时把值显示在编辑页面上
+                                    $("#id").val(data.horselight.id);
+                                    $("#start_time").val(data.horselight.start_time);
+                                    $("#stop_time").val(data.horselight.stop_time);
+                                    $("#title").val(data.horselight.title);
+                                    $("#game").val(data.horselight.game_id);
+                                    $("#description").val(data.horselight.description);
+                                    form.render('radio');
+                                    form.render('select');
+
+                                    indexPopup = layer.open({
+                                        type: 1,
+                                        skin: 'layui-layer-demo', //样式类名
+                                        closeBtn: 1, //显示关闭按钮1
+                                        cancel: function(index, layero){
+                                            closePopup();
+                                        },
+                                        title: '编辑跑马灯',
+                                        anim: 2,
+                                        area: ['500px', '580px'],
+                                        shadeClose: false, //开启遮罩关闭
+                                        content: $("#HorselightPopup")
+                                    });
+                                } else {
+                                    layer.msg(data.msg || '操作失败');
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.log("[ERROR] - ", error);
+                            }
+                        })
+                    }
+
+
+                } else {
+                    layer.msg(data.msg || '操作失败');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.log("[ERROR] - ", error);
+            }
+        })
+    }
+
+    function saveHorselight() {
+        var action = $("#action").val();
+        var id = $("#id").val();
+        var start_time = $("#start_time").val();
+        var stop_time = $("#stop_time").val();
+        var title = $("#title").val().trim();
+        var game = $("#game").val().trim();
+        var interval = $("#interval").val();
+        var description = $("#description").val().trim();
+        if (!vilidParamLength(title, 20, "标题长度不超过20") || !vilidParamLength(description, 50, "内容长度不超过50")) return;
+        if (start_time === '') {
+            layer.msg("开始时间不能为空！");
+            return;
+        }
+        if (stop_time === '') {
+            layer.msg("结束时间不能为空！");
+            return;
+        }
+        if (title === '') {
+            layer.msg("公告标题不能为空！");
+            return;
+        }
+        if (description === '') {
+            layer.msg("公告内容不能为空！");
+            return;
+        }
+        if (interval === '') {
+            interval = 0;
+        }
+        var index = layer.load(1, {
+            shade: [0.1, '#fff'] //0.1透明度的白色背景
+        });
+        $.ajax({
+            url: "/admin/operateManage/horselightManage/saveHorselight",
+            type: "POST",
+            data: {
+                action: action,
+                id: id,
+                start_time: start_time,
+                stop_time: stop_time,
+                title: title,
+                game: game,
+                interval: interval,
+                description: description,
+                _csrf: $("#_csrf").val()
+            },
+            timeout: 60000, //1分钟
+            success: function (data) {
+                // console.log(data);
+                layer.close(index);
+                if (data.status === 0) {
+                    layer.msg('操作成功');
+                    reloadTable();
+                    closePopup();
+                } else {
+                    layer.msg(data.msg || '操作失败');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.log("[ERROR] - ", error);
+                layer.close(index);
+            }
+        })
+    }
+
+    /**
+    * 点击禁用启用按钮
+   */
+    function changeStatus(id, title, status) {
+        console.log(id,title,status)
+        layer.confirm("是否确认切换<span style='color:red'> " + title + " </span>广告状态？", {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            if (status === '0') {
+                status = 1
+            } else {
+                status = 0
+            }
+            var index = layer.load(1, {
+                shade: [0.1, '#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url: `/admin/operateManage/horselightManage/horselightStatus`,
+                type: "PUT",
+                data: { id: id, status: status, _csrf: $("#_csrf").val() },
+                timeout: 60000, //1分钟
+                success: function (data) {
+                    layer.close(index);
+                    if (data.status === 0) {
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    } else {
+                        layer.msg(data.msg || '操作失败');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log("[ERROR] - ", error);
+                    layer.close(index);
+                }
+            })
+        }, function () {
+        });
+    }
+
+    function deleteHorselight(id, title) {
+        layer.confirm("是否确认删除<span style='color:red'> " + title + " </span>这条公告？", {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            var index = layer.load(1, {
+                shade: [0.1, '#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url: "/admin/operateManage/horselightManage/deleteHorselight",
+                type: "POST",
+                data: { id: id, _csrf: $("#_csrf").val() },
+                timeout: 60000, //1分钟
+                success: function (data) {
+                    layer.close(index);
+                    if (data.status === 0) {
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    } else {
+                        layer.msg(data.msg || '操作失败');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log("[ERROR] - ", error);
+                    layer.close(index);
+                }
+            })
+        }, function () {
+        });
+    }
+
+    function closePopup() {
+        layer.close(indexPopup);
+        $("#action").val("");
+        $("#id").val("");
+        $("#start_time").val("");
+        $("#stop_time").val("");
+        $("#title").val("");
+        $("#game").val("");
+        $("#description").val("");
+        $("input[value='0']").prop("checked", true);
+        form.render('select');
+        form.render('radio');
+    }
+
+    function reloadTable() {
+        tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                game_id: $("#s_game_id").val(),
+                title: $("#s_title").val(),//搜索传入的值
+                _csrf: $("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+        });
+    }
+</script>
+
+</html>

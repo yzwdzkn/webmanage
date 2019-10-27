@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+
+
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-form">
+                <div class="layui-row">
+                    <div class="layui-col-md12" style="text-align: right">
+                        <div class="layui-inline" >
+                            <div class="layui-input-block"style=" width: 180px;margin-left: 20px;text-align:left">
+                                <select id = "s_game_id" lay-filter="s_game_id">
+                                    <option value="0" selected="">所有游戏</option>
+                                    <% gameData.forEach(function(item){%>
+                                        <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                    <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+<div id="settingKillPopup" class="popup">
+    <div class="layui-form" action="">
+        
+        <div class="layui-form-item" style="width: 300px;">
+            <label class="layui-form-label">游戏名称</label>
+            <div class="layui-input-block">
+                <input type="hidden" id="e_room_id" class="layui-input">
+                <input type="text" id="e_room_name" class="layui-input" readonly="readonly">
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="width: 300px;text-align: right;">
+            <label class="layui-form-label">期望杀数
+                    <i class="ti-help-alt" id='help'></i>
+            </label>
+            
+            <div class="layui-input-block">
+                <input type="number" id="e_kill_number" class="layui-input" style="text-align: right;">
+            </div>
+            <label style="position: absolute;right: 160px;top: 84px;">%</label>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveKill()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup ;
+        $(function(){
+            layui.use(['form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+            $("#help").mouseover(function () {
+                indexOpen = layer.tips("不填则表示使用全局杀数<br/>取值范围1~10%", '#help',{
+                    tips:1
+                });
+            });
+            $("#help").mouseout(function () {
+                layer.close(indexOpen)
+            });
+        })
+
+        function initData(){
+            var game_id = $("#s_game_id").val();
+
+            tableObj = table.render({
+                elem: '#tables',
+                title: '游戏杀数', //导出数据时的文件名
+                url:'/admin/riskManagement/roomKill/list',
+                where:{game_id:game_id,_csrf:$("#_csrf").val()}, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'game_name', title: '游戏名称', align:'center',sort: true,
+                        templet: function(row){
+                            return row.game_info?row.game_info.game_name:"/";
+                        }
+                    },
+                    {field:'room_name', title: '房间名称', align:'center',
+                        templet: function(row){
+                            return row.room_name;
+                        }
+                    },
+                    {field:'kill_number',title: '昨日平台盈利', sort: true, align:'center',
+                        templet: function(row){
+                            for (var i = 0; i < row.room_data.length; i++) {
+                                if(row.room_data.length > 0 && row.room_data[i].create_time == formatDate("yyyy-MM-dd", Date.now() - (86400 * 1000) ) ){
+                                    return parseFloat(parseFloat( (row.room_data[i].lost_gold - row.room_data[i].win_gold) / 100 ).toFixed(2)) >= 0?"<span style = 'color:green'>"+ parseFloat( (row.room_data[i].lost_gold - row.room_data[i].win_gold) / 100 ).toFixed(2) + "</span>":"<span style = 'color:red'>"+ parseFloat( (row.room_data[i].lost_gold - row.room_data[i].win_gold) / 100 ).toFixed(2) + "</span>";
+                                }
+                            }
+                            return "";
+
+                        }
+                    },
+                    {field:'kill_number',title: '今日平台盈利', sort: true, align:'center',
+                        templet: function(row){
+                            for (var i = 0; i < row.room_data.length; i++) {
+                                if(row.room_data.length > 0 && row.room_data[i].create_time == formatDate("yyyy-MM-dd", Date.now()) ){
+                                    return parseFloat(parseFloat( (row.room_data[i].lost_gold + row.room_data[i].deduct_gold - row.room_data[i].win_gold) / 100 ).toFixed(2)) >=0 ?"<span style = 'color:green'>"+ parseFloat( (row.room_data[i].lost_gold - row.room_data[i].win_gold) / 100 ).toFixed(2) + "</span>":"<span style = 'color:red'>"+ parseFloat( (row.room_data[i].lost_gold - row.room_data[i].win_gold) / 100 ).toFixed(2) + "</span>" ;
+                                }
+                            }
+                            return "";
+                        }
+                    },
+                    {field:'all_kill_number',title: '总杀数', sort: true, align:'center'},
+                    {field:'room_data',title: '今日杀数', sort: true, align:'center',
+                        templet: function(row){
+                            for (var i = 0; i < row.room_data.length; i++) {
+                                if(row.room_data.length > 0 && row.room_data[i].create_time == formatDate("yyyy-MM-dd", Date.now()) ){
+                                    if (row.room_data[i].valid_bet == 0) return 0;
+                                    return parseFloat(parseFloat((row.room_data[i].lost_gold - row.room_data[i].win_gold) / row.room_data[i].valid_bet ).toFixed(2)) >= 0?"<span style = 'color:green'>"+ parseFloat(((row.room_data[i].lost_gold - row.room_data[i].win_gold) / row.room_data[i].valid_bet )*100).toFixed(2) + "</span>"+'%':"<span style = 'color:red'>"+ parseFloat(((row.room_data[i].lost_gold - row.room_data[i].win_gold) / row.room_data[i].valid_bet )*100).toFixed(2) + "</span>" +'%';
+                                }
+                            }
+                            return "";
+                        }
+                    } ,
+                    {field:'kill_number',title: "杀数", sort: true, align:'center',
+                        templet: function(row){
+                            let kill_number =  row.kill_number && (row.kill_number.kill_number !== null && row.kill_number.kill_number != undefined) ? parseFloat( row.kill_number.kill_number * 100).toFixed(2) + "%" : "/";
+                            return parseFloat(kill_number) >= 0? "<span style = 'color:green'>"+ kill_number + "</span>":"<span style = 'color:red'>"+ kill_number + "</span>" ;
+                        }
+                    },
+                    {field:'cz', title: '操作',align:'center',
+                        templet: function(row){
+                            var cz = "";
+                            cz += "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='settingKill("+row.room_id+",\""+row.room_name+"\")'>编辑</button>";
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+        }
+      
+        function settingKill(room_id,room_name){
+            $.ajax({
+                url:"/admin/riskManagement/roomKill/getGameKill",
+                type:"POST",
+                data:{
+                    "room_id":room_id,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        if(data.gameKill){
+                            $("#e_kill_number").val(parseFloat(data.gameKill.kill_number * 100).toFixed(1));
+                        }
+                        $("#e_room_id").val(room_id);
+                        $("#e_room_name").val(room_name);
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '编辑房间杀放',
+                            anim: 2,
+                            area: ['500px', '280px'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#settingKillPopup")
+                        });
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                }
+            })
+
+            
+        }
+
+        function saveKill(){
+            var room_id = $("#e_room_id").val();
+            var room_name = $("#e_room_name").val();
+            var kill_number = $("#e_kill_number").val();
+            if(kill_number !== '' && (kill_number >10 || kill_number<1)) {
+                layer.msg(' 房间杀放期望杀数限2%-10%');
+                return 0;
+            }
+            console.log (kill_number==''?'':parseFloat(kill_number / 100).toFixed(3));
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/riskManagement/roomKill/saveKill",
+                type:"POST",
+                data:{
+                    "room_id":room_id,
+                    "room_name":room_name,
+                    "kill_number" : kill_number==''?'':parseFloat(kill_number / 100).toFixed(3),
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#e_game_id").val("");
+            $("#e_game_name").val("");
+            $("#e_kill_number").val("");
+        }
+
+        function formatDate(fmt, date) {
+            date = new Date(date);
+            var o = {
+                "M+": date.getMonth() + 1, //月份
+                "d+": date.getDate(), //日
+                "h+": date.getHours(), //小时
+                "m+": date.getMinutes(), //分
+                "s+": date.getSeconds(), //秒
+                "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+                "S": date.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt))
+                fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt))
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+
+        function reloadTable(){
+            var game_id = $("#s_game_id").val();
+            tableObj.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                game_id:game_id,
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+    </script>      
+</html>

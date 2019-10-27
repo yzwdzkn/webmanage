@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px;">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-form">
+                    <div class="layui-row">
+                        <div class="layui-col-md3">
+                            <div class="layui-input-inline btm_width_100">
+                                    <% if( childMenu.includes('bt1') ){ %> 
+                                        <button type="button" class="layui-btn" id="addGame">添加房间</button>
+                                    <% } %> 
+                                    
+                            </div>
+                        </div>
+                        <div class="layui-form" style="text-align: right">
+                            <div class="layui-inline" style="text-align: left">
+                                <div class="layui-input-block" style=" width: 180px;margin-left: 20px;">
+                                    <select id="s_game_id" lay-filter="s_game_id">
+                                        <option value="0" selected="">所有游戏</option>
+                                        <% gameList.forEach(function(item){%>
+                                        <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-input-inline btm_width_70">
+                                <button type="button" class="layui-btn" id="search">搜索</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+
+<div id="gamePopup" class="popup">
+    <div class="layui-form" action="">
+    
+        <div class="layui-form-item">
+            <label class="layui-form-label">游戏名称</label>
+            <div class="layui-input-block">
+                <select name="game_id" id="game_id">
+                        <option value="0">请选择</option>
+                        <% gameList.forEach(function(item){ %>
+                        <option value="<%=item.game_id %>" ><%=item.game_name %></option>   
+                        <% }) %>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">房间id</label>
+            <div class="layui-input-block">
+                <input type="text" name="room_id" id="room_id" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">房间名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="room_name" id="room_name" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">匹配模式</label>
+            <div class="layui-input-block">
+                <select name="matching_status" id="matching_status">
+                    <option value="3" selected>只匹配机器人</option>
+                    <option value="1">同站点内匹配</option>
+                    <option value="2">同平台内匹配</option>
+                    <option value="6">全局匹配</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <select name="status" id="status">
+                    <option value="1">开启</option>
+                    <option value="2">关闭</option>
+                    <option value="3">暂未开放</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveAddRoom()">添加房间</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="editGamePopup" class="popup">
+    <div class="layui-form" action="">
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">房间id</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="e_room_id" id="e_room_id" class="layui-input" readonly='readonly'>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">游戏名称</label>
+                    <div class="layui-input-block">
+                        <select name="e_game_id" id="e_game_id">
+                                <option value="0">请选择</option>
+                                <% gameList.forEach(function(item){ %>
+                                <option value="<%=item.game_id %>" ><%=item.game_name %></option>   
+                                <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">房间名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="e_room_name" id="e_room_name" class="layui-input">
+                    </div>
+                </div>
+
+
+
+                
+                <div class="layui-form-item">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-block">
+                        <select name="e_status" id="e_status">
+                            <option value="1">开启</option>
+                            <option value="2">关闭</option>
+                            <option value="3">暂未开放</option>
+                        </select>
+                    </div>
+                </div>
+        
+                <div class="layui-form-item">
+                    <label class="layui-form-label">匹配模式</label>
+                    <div class="layui-input-block">
+                        <select name="e_matching_status" id="e_matching_status">
+                            <option value="3" selected>只匹配机器人</option>
+                            <option value="1">同站点内匹配</option>
+                            <option value="2">同平台内匹配</option>
+                            <option value="6">全局匹配</option>
+                        </select>
+                    </div>
+                </div>
+    
+    
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveEditGame()">修改游戏</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup;
+        var GAMETAG = {
+            0:'-',
+            1:'热门',
+            2:'最新',
+            3:'暂未开放',
+            4:'游戏维护',
+            5:'免费试玩'
+        }
+        var MATCHEDPATTERN = {
+            1:'同站点内匹配',
+            2:'同平台内匹配',
+            3:'只匹配机器人',
+            6:'全局匹配'
+        }
+        var STATUS={
+            1: '开启',
+            2: '关闭',
+            3: '暂时开放'
+        }
+        $(function(){
+            layui.use(['form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                
+                initData();
+
+            });
+
+            $("#search").click(function(){
+                initData();
+            })
+
+            $("#addGame").click(function(){
+                addGame();
+            })            
+
+        })
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '房间设置', //导出数据时的文件名
+                url:'/admin/operateManage/gameRoomManage/gameRoomManage/list',
+                where:{
+                    game_id:$("#s_game_id").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page: true,
+                limit:10,
+                cols: [[
+                    {field:'room_id', title: '房间id', align:'center',sort: true},
+                    {field:'game_name', title: '游戏类型',align:'center'},
+                    {field:'room_name', title: '房间名称',align:'center'},
+                    {field:'matching_status', title: '匹配模式',align:'center', templet: function(row) {
+                        return MATCHEDPATTERN[row.matching_status]
+                    }},
+                    {field:'status', title: '状态',align:'center', templet: function(row) {
+                        if( row.status == 1 ){
+                            return "<span style='color:green'>开启</span>"
+                        }else if( row.status == 2 ){
+                            return "<span style='color:red'>关闭</span>"
+                        }else if(row.status == 3 ){
+                            return "<span style='color:gray'>暂未开放</span>"
+                        }
+                    }},
+                    {field:'cz', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            var cz = "";
+                            cz += "<% if( childMenu.includes('bt1') ){ %>   <button type='button' class='layui-btn layui-btn-primary layui-btn-xs' onclick='editGameRoom("+row.room_id+")'>编辑</button> <% } %>";
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+        }
+        
+        function editGameRoom(room_id){
+            //loading层
+            console.log('room_id: ', room_id)
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/gameRoomManage/gameRoomManage/findRoomById",
+                type:"GET",
+                data:{
+                    room_id:room_id,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    console.log("data:",data);
+                    if(data.status == 0){
+                        console.log("data: ", data)
+                        $("#e_game_id").val(data.data.game_id);
+                        $("#e_room_id").val(data.data.room_id);
+                        $("#e_room_name").val(data.data.room_name);
+                        // $("#e_admittance").val(data.data.admittance);
+                        $("#e_matching_status").val(data.data.matching_status);
+                        $("#e_matching_status").val(data.data.matching_status);
+                        $("#e_status").val(data.data.status)
+                        form.render();
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '编辑房间',
+                            anim: 2,
+                            area: ['700px', '570px'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#editGamePopup")
+                        });
+                    }else{
+                        layer.msg('操作失败！');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                    
+                }
+            })
+            
+        }
+
+        function deleteGame(game_id){
+            layer.confirm("是否确认删除该游戏？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/platformManage/gameManage/deleteGame",
+                    type:"POST",
+                    data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            reloadTable();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#game_id").val("0");
+            $("#game_name").val("");
+            $("#room_name").val("");
+            $('#room_id').val("");
+            $('#matching_status').val("0");
+            $("#status").val("1");
+            // $("#admittance").val('');
+            
+            $("#e_game_id").val("0");
+            $("#e_game_name").val("");
+            $("#e_room_name").val("");
+            $('#e_room_id').val("");
+            $('#e_matching_status').val("0");
+            $("#e_status").val("1");
+            // $("#e_admittance").val("");
+            form.render()
+        }
+
+        function addGame(){
+            // $("#game_tag option:first").prop("selected", 'selected'); //默认选择第一个
+            // $("#matching_status option:first").prop("selected", 'selected'); 
+            console.log()
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                cancel: function(index, layero){
+                    closePopup();
+                },
+                title: '添加房间',
+                anim: 2,
+                area: ['700px', '550px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#gamePopup")
+            });
+        }
+
+        function saveAddRoom(){
+            var game_id = $('#game_id').val()
+            var room_id = $("#room_id").val().trim();
+            var room_name = $("#room_name").val().trim();
+            // var admittance = $("#admittance").val()
+            var status = $("#status").val()
+            var matching_status = $("#matching_status").val()
+            if(!/^[0-9]+$/.test(room_id)) {
+                layer.msg('房间id只能为数字')
+                return
+            }
+            if(room_id == ""){
+                layer.msg('游戏ID不能为空！');
+                return ;
+            }
+            if(matching_status == "0"){
+                layer.msg('请选择匹配模式！');
+                return ;
+            }
+            // if(!/^[0-9]+$/.test(admittance)) {
+            //     layer.msg('准入只能为数字')
+            //     return
+            // }
+            if(room_name == '') {
+                layer.msg('房间名字不能为空')
+                return
+            }
+            if(game_id == '0') {
+                layer.msg('请选择游戏名称')
+                return
+            }
+
+
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            console.log("################")
+            $.ajax({
+                url:"/admin/operateManage/gameRoomManage/gameRoomManage",
+                type:"POST",
+                data:{
+                    game_id,
+                    room_id,
+                    room_name,
+                    // admittance,
+                    matching_status,
+                    status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function saveEditGame(){
+            var game_id = $("#e_game_id").val()
+            var room_id = $('#e_room_id').val()
+            var room_name = $("#e_room_name").val().trim();
+            // var admittance = $("#e_admittance").val()
+            var matching_status = $("#e_matching_status").val()
+            var status = $("#e_status").val()
+            if(game_id == ""){
+                layer.msg('游戏名称不能为空！');
+                return ;
+            }
+            if(matching_status == "0"){
+                layer.msg('请选择匹配模式！');
+                return ;
+            }
+            if(room_name == ""){
+                layer.msg('游戏房间名不能为空！');
+                return ;
+            }
+
+            if(game_id == '0') {
+                layer.msg('请选择游戏名称')
+                return
+            }
+            // if(!/^[0-9]+$/.test(admittance)) {
+            //     layer.msg('准入只能为数字加分号')
+            //     return
+            // }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/gameRoomManage/gameRoomManage/editRoom",
+                type:"PUT",
+                data:{
+                    room_id,
+                    game_id,
+                    room_name,
+                    // admittance,
+                    matching_status,
+                    status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function showRoom(game_id,obj){
+            //iframe窗
+            layer.open({
+                type: 2,
+                title: $(obj).text() + '-房间设置',
+                shadeClose: true,
+                shade: false,
+                maxmin: true, //开启最大化最小化按钮
+                area: ['893px', '600px'],
+                content: '/admin/platformManage/roomManage?game_id='+game_id
+            });
+        }
+        
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+    </script>      
+</html>

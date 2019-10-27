@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/zui/1.9.1/css/zui.min.css"> -->
+    <link rel="stylesheet" href="/public/admin/static/dist/css/zui.min.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+    <style type="text/css">
+        .big-font {
+            font-size: 15px;
+        }
+        .green{
+            color: #38B03F;
+        }
+        .red{
+            color: #FF5722;
+        }
+    </style>
+</head>
+
+<body style="background-color: #f1f0f4">
+      
+        <div class="layui-card" style=" box-shadow: #000000 -2px -2px 20px -16px;">
+            <div class="layui-card-header" style="padding:10px 10px;">
+                
+                
+                <div class="layui-input-inline" style="margin-left: 15px; margin-bottom: 10px; width: 160px;">
+                </div>
+    
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="row" style="height: 100px;margin-left: 20px;margin-right: 20px;margin-top: 30px;">
+                    <div style="width: 240px;float: left;">
+                        <img src="/public/admin/img/aaa.jpg" style="float: left">
+                        <div style="position: relative;left: 10px;">
+                            <span>今日投注人数</span>
+                            <br/>
+                            <b id='today_bet_number' style="font-size: 25px;"></b>                       
+                        </div>
+                    </div>
+                    <div style="width: 240px;float: left;">
+                        <img src="/public/admin/img/aaa.jpg" style="float: left">
+                        <div style="position: relative;left: 10px;">
+                            <span>今日杀数</span>
+                            <br/>
+                            <b id='today_kill_number' style="font-size: 25px;"></b>
+                        </div>
+                    </div>
+                    <div style="width: 240px;float: left;">
+                        <img src="/public/admin/img/aaa.jpg" style="float: left">
+                        <div style="position: relative;left: 10px;">
+                            <span>今日总盈利</span>
+                            <br/>
+                            <b id='today_lost_win' style="font-size: 25px;"></b>
+                        </div>
+                    </div>
+                    <div style="width: 240px;float: left;">
+                        <img src="/public/admin/img/aaa.jpg" style="float: left">
+                        <div style="position: relative;left: 10px;">
+                            <span>本月总盈利</span>
+                            <br/>
+                            <b id='month_lost_win' style="font-size: 25px;"></b>
+                        </div>
+                    </div>
+                    <!-- dq 10-14  -->
+                    <!-- <div style="width: 240px;float: left;">
+                        <img src="/public/admin/img/aaa.jpg" style="float: left">
+                        <div style="position: relative;left: 10px;">
+                            <span>本月待交收金额</span>
+                            <br/>
+                            <b id="month_send_money" style="font-size: 25px;"></b>
+                        </div>
+                    </div> -->
+                    <div class="layui-form layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                        <select id="s_platform_id" lay-filter="s_platform_id">
+                            <option value="" selected="">所有平台</option>
+                            <% platforms.forEach(function(item) { %>
+                            <option value="<%= item.platform_id%>"><%=item.platform_id %> -- <%= item.platform_name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-row" style="padding-left: 15px;">  <!-- dq 10-14  -->
+                    <div class="layui-col-md2 ">
+                        <b>总会员数：<span id='usr_number'></span></b>
+                    </div>
+                    <div class="layui-col-md2">
+                        <b>历史总投注：<span id='his_valid_bet'></span></b>
+                    </div>
+                    <div class="layui-col-md2">
+                        <b>历史总盈利：<span id='his_lost_win'></span></b>
+                    </div>
+                    <div class="layui-col-md2">
+                        <b>历史平均杀数：<span id='his_kill'></span></b>
+                    </div>
+                    <!-- dq 10-14  -->
+                    <div class="layui-col-md2">
+                        <b>本月待交收金额：<span id='month_send_money'></span></b>
+                    </div>
+                </div>
+            <div class="layui-card-body">
+                <table class="layui-table" style="text-align: center;">
+                        <colgroup>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th lay-data="field:'index'" style="text-align: center;">指标</th>
+                                <th lay-data="field:'today-data'" style="text-align: center;">
+                                    当日
+                                    <br/>
+                                    <input type="text"  id="today" style="text-align: center;"></input>
+                                </th>
+                                <th lay-data="field:'compare-last-day'" style="text-align: center;">
+                                    环比上日
+                                    <br/>
+                                    <span id="yesterday"></span>
+                                </th>
+                                <th lay-data="field:'compare-other-day'" style="text-align: center;">
+                                    同比历史每日平均
+                                </th>
+                                <th lay-data="field:'this-week-data'" style="text-align: center;">
+                                    当周
+                                    <br/>
+                                    <span id="thisWeek"></span>
+                                </th>
+                                <th lay-data="field:'compare-last-week'" style="text-align: center;">
+                                    环比上周
+                                    <br/>
+                                    <span id="lastWeek"></span>
+                                </th>
+                                <th lay-data="field:'this-month-data'" style="text-align: center;">
+                                    当月
+                                    <br/>
+                                    <span id="thisMonth"></span>
+                                </th>
+                                <th lay-data="field:'compare-last-month'" style="text-align: center;">
+                                    环比上月
+                                    <br/>
+                                    <span id="lastMonth"></span>
+                                </th>
+                            </tr> 
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>会员登录数<i class="ti-help-alt" id='login_num'></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='1-7'></td>
+                            </tr>
+                            <tr>
+                                <td>新增会员数<i class="ti-help-alt" id='new_login_num'></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='2-7'></td>
+                            </tr>
+                            <tr>
+                                <td>新增投注率<i class="ti-help-alt" id="new_bet_race"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='3-7'></td>
+                            </tr>
+                            <tr>
+                                <td>总投注人数<i class="ti-help-alt" id="new_bet_num"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='4-7'></td>
+                            </tr>
+                            <tr>
+                                <td>总投注额<i class="ti-help-alt" id="new_bet_sum"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='5-7'></td>
+                            </tr>
+                            <tr>
+                                <td>总抽水额<i class="ti-help-alt" id="deduct_sum"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='6-7'></td>
+                            </tr>
+                            <tr>
+                                <td>平台盈利<i class="ti-help-alt" id="lose_win_sum"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='7-7'></td>
+                            </tr>
+                            <tr>
+                                <td>杀数<i class="ti-help-alt" id="kill_num_sum"></i></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-1'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-2'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-3'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-4'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-5'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-6'></td>
+                                <td style="font-size: 15px; font-weight: bold;" id='8-7'></td>
+                            </tr>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div> 
+
+    <!-- <div style="margin: 10px 0px 10px 25px;">
+            <span class="spanTitle"><%=title%></span>
+            <i class="ti-help-alt" id='help'>
+                <div class="layui-layer layui-layer-tips" id="layui-layer2" type="tips" times="2" showtime="3000000" contype="object" style="top:30px;left:110px;z-index: 19891016; width: 350px; height: 300px; position: absolute;display: none;">
+                    <div id="" class="layui-layer-content" style="width: auto;height: 278px; position: relative; background-color: rgb(0, 0, 0,0.8);">
+                            <div class="layui-row"><p class="layui-col-md3">新增登录</p>: 新增的用户数量</div>
+                            <div class="layui-row"><b class="layui-col-md3">新增投注</b>: 今天新增加的参与过投注的用户数</div>
+                            <div class="layui-row"><b class="layui-col-md3">新增投注率</b>: 新增投注人数/新增用户数量</div>
+                            <div class="layui-row"><b class="layui-col-md3">活跃人数</b>: 今日平台所有参与过投注的人数 </div>
+                            <div class="layui-row"><b class="layui-col-md3">玩家输赢</b>: 玩家输赢的分数 </div>
+                            <div class="layui-row"><b class="layui-col-md3">当前在线人数</b>: 当天老用户登录游戏和新增用户</div>
+                            <div class="layui-row"><b class="layui-col-md3">投注分数</b>: 玩家投注总分数 </div>
+                            <div class="layui-row"><b class="layui-col-md3">总抽水</b>: 游戏抽水总数 </div>
+                            <div class="layui-row"><b class="layui-col-md3">杀数</b>: 平台收益/总投注</div>
+                            <div class="layui-row"><b class="layui-col-md3">用户留存</b>: 用户留存率</div>
+                            <i class="layui-layer-TipsG layui-layer-TipsB" style="border-right-color: rgb(0, 0, 0,0.6);"></i>
+                    </div>
+                    <span class="layui-layer-setwin"></span>
+                </div>
+            </i>
+    </div>
+    <div class="layui-card" style=" box-shadow: #000000 -2px -2px 20px -16px;">
+        <div class="layui-card-header" style="padding:10px 10px;">
+            
+            
+            <div class="layui-input-inline" style="margin-left: 15px; margin-bottom: 10px; width: 160px;">
+            </div>
+
+            <div class="layui-inline" style="text-align: left">
+
+            </div>
+            
+
+            <div style="float: right;">
+                <div class="layui-form">
+                    <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                        <select id="s_platform_id" lay-filter="s_platform_id">
+                            <option value="" selected="">所有平台</option>
+                            <% platforms.forEach(function(item) { %>
+                            <option value="<%= item.platform_id%>"><%=item.platform_id %> -- <%= item.platform_name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                        <input type="text" id="start_date" lay-verify="date" placeholder="时间" autocomplete="off" class="layui-input">
+                    </div>
+
+                    <div class="layui-input-inline btm_width_70">
+                        <button type="button" class="layui-btn" id="search" style="background-color: #7B7DE5">搜索</button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-tab layui-tab-brief" lay-filter="tabs">
+                <ul class="layui-tab-title">
+                    <li class="layui-this" lay-id="1" id="toDay">今日</li>
+                    <li lay-id="2" id="toWeek">昨日</li>
+                    <li lay-id="3" id="toMonth">本周</li>
+                    <li lay-id="4" id="toMonth">上周</li>
+                    <li lay-id="5" id="toMonth">本月</li>
+                    <li lay-id="6" id="toMonth">上月</li>
+                </ul>
+                <div class="layui-tab-content">
+                    <div class="layui-row realTimeDatas">
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">新增登录</span>
+                            <span class="dataValue" id="register_count">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md8">
+                            <span class="dataKey">新增投注人数</span>
+                            <span class="dataValue" id="new_bet_number">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">新增投注率</span>
+                            <span class="dataValue" id="new_bet_rate">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md8">
+                            <span class="dataKey">活跃人数</span>
+                            <span class="dataValue" id="login_count">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">会员输赢</span>
+                            <span class="dataValue" id="lost_win">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md8">
+                            <span class="dataKey">投注分数</span>
+                            <span class="dataValue" id="valid_bet">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">总抽水</span>
+                            <span class="dataValue" id="deduct_gold">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md8">
+                            <span class="dataKey">杀数</span>
+                            <span class="dataValue" id="kill_number">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">用户留存</span>
+                            <span class="dataValue" id="remain_rate">0</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div> -->
+</body>
+<script src="/public/admin/js/jquery.min.js"></script>
+
+<script src="/public/admin/js/popper.min.js"></script>
+<script src="/public/admin/js/bootstrap.min.js"></script>
+<!-- <script src="/public/admin/js/admetro.bundle.js"></script> -->
+
+<!-- These plugins only need for the run this page -->
+<script src="/public/admin/js/d3.min.js"></script>
+<script src="/public/admin/js/c3.min.js"></script>
+<script src="/public/admin/js/c3-api-chart.js"></script>
+
+<!-- Active JS -->
+<!-- <script src="/public/admin/js/active.js"></script> -->
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+<script src="/public/admin/js/echarts.js"></script>
+<script src="/public/admin/js/echart-basic.js"></script>
+
+<script>
+    var layer, currentLayId = 1, subtips, table, element, form;
+    var tipsContent = ``;
+    $(function () {
+        const to = new Date();
+        const today = `${to.getFullYear()}-${to.getMonth() + 1}-${to.getDate()}`;
+        const yes = new Date(to.getTime() - 60 * 60 *24 *1000);
+        $('#yesterday').text(`${yes.getFullYear()}-${yes.getMonth() + 1}-${yes.getDate()}`);
+        const thisWeek = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDay() === 0 ? 6 : to.getDay() - 1));
+        $('#thisWeek').text(`${thisWeek.getFullYear()}-${thisWeek.getMonth() + 1}-${thisWeek.getDate()} - ${today}`);
+        const lastWeek = new Date(thisWeek.getTime() - 60 * 60 *24 *1000 * 7);
+        const lastWeek2 = new Date(lastWeek.getTime() + 60 * 60 *24 *1000 * 6);
+        $('#lastWeek').text(`${lastWeek.getFullYear()}-${lastWeek.getMonth() + 1}-${lastWeek.getDate()} - ${lastWeek2.getFullYear()}-${lastWeek2.getMonth() + 1}-${lastWeek2.getDate()}`);
+        const thisMonth = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDate() - 1));
+        $('#thisMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() + 1}-${thisMonth.getDate()} - ${today}`);
+        const lastMonth2 = new Date(thisMonth.getTime() - 60 * 60 *24 *1000);
+       $('#lastMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() == 0 ? 12 : thisMonth.getMonth()}-${thisMonth.getDate()} - ${lastMonth2.getFullYear()}-${lastMonth2.getMonth() + 1}-${lastMonth2.getDate()}`); 
+       layui.use(['element', 'layer', 'laydate','form'], function () {
+            element = layui.element;
+            form = layui.form
+            var laydate = layui.laydate;
+            table = layui.table;
+            layer = layui.layer;
+            var value = Date.now() - 86400000;
+            //日期
+            laydate.render({
+                elem: '#start_date',
+                type: 'date',
+                format: 'yyyy-MM-dd',
+            });
+            laydate.render({
+                elem: '#end_date',
+                type: 'date',
+                format: 'yyyy-MM-dd',
+            });
+            element.on('tab(tabs)', function () {
+                currentLayId = this.getAttribute('lay-id');
+                if (currentLayId != 1 && currentLayId != 2) {
+                    $("#is_show").attr('style', 'display:none')
+                } else {
+                    $("#is_show").attr('style', 'display:block')
+                }
+                initData(currentLayId);
+            });
+            element.on('tab(changeData)', function (data) {
+                // getUserOnlineByTime()
+            });
+
+            laydate.render({
+                elem: '#today',
+                value: new Date(),
+                theme: 'grid',
+                isInitValue: true,
+                done: function() {
+                    initData(currentLayId);
+                    const to = new Date($("#today").val() || '');
+                    const today = `${to.getFullYear()}-${to.getMonth() + 1}-${to.getDate()}`;
+                    const yes = new Date(to.getTime() - 60 * 60 *24 *1000);
+                    $('#yesterday').text(`${yes.getFullYear()}-${yes.getMonth() + 1}-${yes.getDate()}`);
+                    const thisWeek = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDay() === 0 ? 6 : to.getDay() - 1));
+                    $('#thisWeek').text(`${thisWeek.getFullYear()}-${thisWeek.getMonth() + 1}-${thisWeek.getDate()} - ${today}`);
+                    const lastWeek = new Date(thisWeek.getTime() - 60 * 60 *24 *1000 * 7);
+                    const lastWeek2 = new Date(lastWeek.getTime() + 60 * 60 *24 *1000 * 6);
+                    $('#lastWeek').text(`${lastWeek.getFullYear()}-${lastWeek.getMonth() + 1}-${lastWeek.getDate()} - ${lastWeek2.getFullYear()}-${lastWeek2.getMonth() + 1}-${lastWeek2.getDate()}`);
+                    const thisMonth = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDate() - 1));
+                    $('#thisMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() + 1}-${thisMonth.getDate()} - ${today}`);
+                    const lastMonth2 = new Date(thisMonth.getTime() - 60 * 60 *24 *1000);
+                    $('#lastMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() == 0 ? 12 : thisMonth.getMonth()}-${thisMonth.getDate()} - ${lastMonth2.getFullYear()}-${lastMonth2.getMonth() + 1}-${lastMonth2.getDate()}`); 
+      
+                },
+            });
+
+            $('#today').change(function() {
+                initData(currentLayId);
+                const to = new Date($("#today").val() || '');
+                const today = `${to.getFullYear()}-${to.getMonth() + 1}-${to.getDate()}`;
+                const yes = new Date(to.getTime() - 60 * 60 *24 *1000);
+                $('#yesterday').text(`${yes.getFullYear()}-${yes.getMonth() + 1}-${yes.getDate()}`);
+                const thisWeek = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDay() === 0 ? 6 : to.getDay() - 1));
+                $('#thisWeek').text(`${thisWeek.getFullYear()}-${thisWeek.getMonth() + 1}-${thisWeek.getDate()} - ${today}`);
+                const lastWeek = new Date(thisWeek.getTime() - 60 * 60 *24 *1000 * 7);
+                const lastWeek2 = new Date(lastWeek.getTime() + 60 * 60 *24 *1000 * 6);
+                $('#lastWeek').text(`${lastWeek.getFullYear()}-${lastWeek.getMonth() + 1}-${lastWeek.getDate()} - ${lastWeek2.getFullYear()}-${lastWeek2.getMonth() + 1}-${lastWeek2.getDate()}`);
+                const thisMonth = new Date(to.getTime() - 60 * 60 *24 *1000 * (to.getDate() - 1));
+                $('#thisMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() + 1}-${thisMonth.getDate()} - ${today}`);
+                const lastMonth2 = new Date(thisMonth.getTime() - 60 * 60 *24 *1000);
+                $('#lastMonth').text(`${thisMonth.getFullYear()}-${thisMonth.getMonth() == 0 ? 12 : thisMonth.getMonth()}-${thisMonth.getDate()} - ${lastMonth2.getFullYear()}-${lastMonth2.getMonth() + 1}-${lastMonth2.getDate()}`); 
+      
+            });
+
+            initData(currentLayId);
+            form.on('select(s_platform_id)', function() {
+                initData('1');
+            });
+        });
+
+        $("#search").click(function () {
+            element.tabChange('tabs','1')
+            initData('1');
+        })
+
+        $("#s_platform_id").change(function() {
+            initData('1');
+        });
+    })
+
+    $("#help").mouseover(function () {
+        $('#layui-layer2').show();
+    })
+
+    $("#help").mouseout(function () {
+        $('#layui-layer2').hide();
+    })
+
+
+
+
+    function initData(type) {
+        var date = $("#today").val();
+        var platform_id = $("#s_platform_id").val()
+        console.log(platform_id);
+        //loading层
+        var index = layer.load(1);
+        $.ajax({
+            url: "/admin/gameDataManage/totalData/initData",
+            type: "get",
+            data: {
+                platform_id: platform_id,
+                type: type,
+                date: date,
+                _csrf: $("#_csrf").val()
+            },
+            timeout: 60000, //1分钟
+            success: function (data) {
+               const insertData = data.data;
+
+                $("#today_bet_number").text((insertData.bet_number || 0).toLocaleString('en-US'));  // 今日投注人数
+                $("#today_kill_number").html(`<span style="color:${(parseFloat(insertData.kill || 0) * 100).toFixed(1)>=0?"green":"red"}">${(parseFloat(insertData.kill || 0) * 100).toFixed(1)}%</span>`);  // 今日杀数==> 输赢 / 总投注
+                // $("#today_lost_win").text(parseFloat((insertData.lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')); // 今日总盈利
+                $("#today_lost_win").html(`<span style="color:${parseFloat((insertData.lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')>=0?"green":"red"}">${parseFloat((insertData.lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')}</span>`); // 今日总盈利
+
+                // $("#month_lost_win").text(parseFloat((insertData.month_lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')); // 本月总盈利
+                $("#month_lost_win").html(`<span style="color:${parseFloat((insertData.month_lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')>=0?"green":"red"}">${parseFloat((insertData.month_lost_gold || 0) / 100).toFixed(2).toLocaleString('en-US')}</span>`); // 本月总盈利
+                // $("#month_send_money").text((insertData.month_gold ||0).toLocaleString('en-US')); // 本月待交收金额
+                // $("#month_send_money").text(parseFloat((insertData.month_gold ||0) / 100).toFixed(2).toLocaleString('en-US')); // 本月待交收金额
+                $("#month_send_money").html(`<span style="color:${parseFloat((insertData.month_gold ||0) / 100).toFixed(2).toLocaleString('en-US')>=0?"green":"red"}">${parseFloat((insertData.month_gold ||0) / 100).toFixed(2).toLocaleString('en-US')>=0?parseFloat((insertData.month_gold ||0) / 100).toFixed(2).toLocaleString('en-US'):'-'}</span>`); // 本月待交收金额
+
+                $('#usr_number').text(insertData.usr_number || 0);
+                $('#his_valid_bet').text(insertData.valid_bet / 100 || 0);
+                $('#his_lost_win').text(insertData.lost_win / 100 || 0);
+                $('#his_kill').text(parseFloat(insertData.his_kill * 100).toFixed(1) + '%' || 0);
+                let list = ['today', 'yesterdayRate', 'historyRate', 'week', 'lastWeekRate', 'month', 'lastMonthRate'];
+                for (let i = 1; i < 8; i ++) {
+                    let defaultValue = 0;
+                    let percent = '';
+                    if (i === 2 || i ===3 || i ===5 || i ===7) {
+                        defaultValue = '';
+                        percent = '%';
+                    }
+                    //
+                    let a = `${insertData[list[i-1]] && insertData[list[i-1]].user_login_count}` === null || `${insertData[list[i-1]] && insertData[list[i-1]].user_login_count}` === 'null' ? defaultValue : `${insertData[list[i-1]] && insertData[list[i-1]].user_login_count}`;
+                    if (a && percent) {
+                        a = parseFloat(a * 100).toFixed(1);
+                        
+                    } else if (a){
+                        a = parseFloat(a).toLocaleString('en-US');
+                    }
+                    //
+                    let b = `${insertData[list[i-1]].register_count}` === null || `${insertData[list[i-1]].register_count}` === 'null' ? defaultValue : `${insertData[list[i-1]].register_count}`;
+                    if (b && percent) {
+                        b = parseFloat(b * 100).toFixed(1);
+                       
+                    } else if (b){
+                        b = parseFloat(b).toLocaleString('en-US');
+                    }
+                    //
+                    let c = `${insertData[list[i-1]].new_bet_number}` === null ||  `${insertData[list[i-1]].new_bet_number}` === 'null' ? defaultValue : `${insertData[list[i-1]].new_bet_number}`;
+                    if (c) c = parseFloat(c * 100).toFixed(1);
+                    
+                    // 
+                    let d = `${insertData[list[i-1]].bet_number || defaultValue}`;
+                    if (d && percent) {
+                        d = parseFloat(d * 100).toFixed(1);
+                        
+                    } else if (d){
+                        d = parseFloat(d).toLocaleString('en-US');
+                    }
+                    // 
+                    let e = `${insertData[list[i-1]].valid_bet || defaultValue}`;
+                    if (e && percent) {
+                        e = parseFloat(e * 100).toFixed(1);
+                        
+                    } else if (e){
+                        e = parseFloat(e / 100).toFixed(2).toLocaleString('en-US');
+                    }
+                    //
+                    let f = `${insertData[list[i-1]].deduct_gold || defaultValue}`;
+                    if (f && percent) {
+                        f = parseFloat(f * 100).toFixed(1);
+                    } else if (f){
+                        f = parseFloat(f / 100).toFixed(2).toLocaleString('en-US');
+                    }
+                    //
+                    let g = `${insertData[list[i-1]].platform_makeMoney || defaultValue}`;
+                    if (g && percent) {
+                        g = parseFloat(g * 100).toFixed(1);
+                       
+                    } else if (g){
+                        g = parseFloat(g / 100).toFixed(2).toLocaleString('en-US');
+                    }
+                    //
+                    let h = `${(insertData[list[i-1]].his_kill_count || defaultValue)}`;
+                    if (h) h = parseFloat(h * 100).toFixed(1);
+                    
+                    $(`#1-${i}`).text(a ? a + percent : '-');
+                    $(`#2-${i}`).text(b ? b + percent : '-');
+                    $(`#3-${i}`).text(c ? c + '%' : '-');
+                    $(`#4-${i}`).text(d ? d + percent : '-');
+                    $(`#5-${i}`).text(e ? e + percent : '-');
+                    $(`#6-${i}`).text(f ? f + percent : '-');
+                    // $(`#7-${i}`).text(g ? g + percent : g);
+                    $(`#7-${i}`).html(g ? `<span style="color:${g>=0?'#38B03F':'#FF5722'}">${g + percent}</span>` : '-');
+                    // $(`#8-${i}`).text(h ? h + '%' : h);
+                    $(`#8-${i}`).html(h ? `<span style="color:${h>=0?'#38B03F':'#FF5722'}">${h + '%'}</span>` : '-');
+                    if(percent && a > 0) {
+                        $(`#1-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#1-${i}`).removeClass('red');
+                        $(`#1-${i}`).addClass('green');
+                    } else if(percent && a < 0) {
+                        $(`#1-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#1-${i}`).removeClass('green');
+                        $(`#1-${i}`).addClass('red');
+                    }
+                    if(percent && b > 0) {
+                        $(`#2-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#2-${i}`).removeClass('red');
+                        $(`#2-${i}`).addClass('green');
+                    } else if(percent && b < 0) {
+                        $(`#2-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#2-${i}`).removeClass('green');
+                        $(`#2-${i}`).addClass('red');
+                    }
+                    if (percent && c > 0) {
+                        $(`#3-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#3-${i}`).removeClass('red');
+                        $(`#3-${i}`).addClass('green');
+                    } else if(percent && c < 0) {
+                        $(`#3-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#3-${i}`).removeClass('green');
+                        $(`#3-${i}`).addClass('red');
+                    }
+                    if(percent && d > 0) {
+                        $(`#4-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#4-${i}`).removeClass('red');
+                        $(`#4-${i}`).addClass('green');
+                    } else if(percent && d < 0) {
+                        $(`#4-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#4-${i}`).removeClass('green');
+                        $(`#4-${i}`).addClass('red');
+                    }
+                    if(percent && e > 0) {
+                        $(`#5-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#5-${i}`).removeClass('red');
+                        $(`#5-${i}`).addClass('green');
+                    } else if(percent && e < 0) {
+                        $(`#5-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#5-${i}`).removeClass('green');
+                        $(`#5-${i}`).addClass('red');
+                    }
+                    if(percent && f > 0) {
+                        $(`#6-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#6-${i}`).removeClass('red');
+                        $(`#6-${i}`).addClass('green');
+                    } else if(percent && f < 0) {
+                        $(`#6-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#6-${i}`).removeClass('green');
+                        $(`#6-${i}`).addClass('red');
+                    }
+                    if(percent && g > 0) {
+                        $(`#7-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#7-${i}`).removeClass('red');
+                        $(`#7-${i}`).addClass('green');
+                    } else if(percent && g < 0) {
+                        $(`#7-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#7-${i}`).removeClass('green');
+                        $(`#7-${i}`).addClass('red');
+                    }
+                    if (percent && h > 0) {
+                        $(`#8-${i}`).append('<i class="icon icon-long-arrow-up" style="color: #38B03F"></i>');
+                        $(`#8-${i}`).removeClass('red');
+                        $(`#8-${i}`).addClass('green');
+                    } else if(percent && h < 0) {
+                        $(`#8-${i}`).append('<i class="icon icon-long-arrow-down" style="color: #FF5722"></i>');
+                        $(`#8-${i}`).removeClass('green');
+                        $(`#8-${i}`).addClass('red');
+                    }
+                }
+                
+              
+
+
+                $("#valid_bet").text(parseFloat(data.data.valid_bet / 100).toFixed(2)); // 投注金额
+                $("#bet_number").text(data.data.bet_number); // 投注人数
+                $("#bet_rate").text(data.data.login_count > 0 ? parseFloat((data.data.bet_number / data.data.login_count) * 100).toFixed(2) + "%" : "0.00%"); //投注率
+
+                var lostwin = (data.data.win_gold - data.data.lost_gold) - data.data.deduct_gold;
+                $("#lost_win").text((lostwin / 100).toFixed(2)); // 会员输赢
+
+                $("#deduct_gold").text( (data.data.deduct_gold / 100).toFixed(2) ); // 抽水
+                $("#remain_rate").text(data.data.remain_rate != 0 ?(data.data.remain_rate)+'%':'0.00%')//次日留存
+                $("#kill_number").text( data.data.valid_bet != 0 ? ((lostwin / data.data.valid_bet) * -100).toFixed(2) + "%": "0.00%")// 杀数
+                layer.closeAll()
+            },
+            error: function (xhr, status, error) {
+                console.log("[ERROR] - ", error);
+                layer.close(index);
+            },
+
+        })
+    }
+
+    // 本周第一天
+    function showWeekFirstDay(date) {
+        var Nowdate = new Date(date);
+        var WeekFirstDay = new Date(Nowdate - (Nowdate.getDay() - 1) * 86400000);
+        M = Number(WeekFirstDay.getMonth()) + 1;
+        return new Date(WeekFirstDay.getFullYear() + "-" + M + "-" + WeekFirstDay.getDate() + " 00:00:00").getTime();
+    }
+
+    // 本周最后天
+    function showWeekLastDay(date) {
+        var Nowdate = new Date(date);
+        var WeekFirstDay = new Date(Nowdate - (Nowdate.getDay() - 1) * 86400000);
+        var WeekLastDay = new Date((WeekFirstDay / 1000 + 6 * 86400) * 1000);
+        M = Number(WeekLastDay.getMonth()) + 1;
+        return new Date(WeekLastDay.getFullYear() + "-" + M + "-" + WeekLastDay.getDate() + " 23:59:59").getTime();
+    }
+
+
+
+    // 本月第一天
+    function showMonthFirstDay(date) {
+        var Nowdate = new Date(date);
+        var MonthFirstDay = new Date(Nowdate.getFullYear(), Nowdate.getMonth(), 1);
+        M = Number(MonthFirstDay.getMonth()) + 1;
+        return new Date(MonthFirstDay.getFullYear() + "-" + M + "-" + MonthFirstDay.getDate() + " 00:00:00").getTime();
+    }
+
+    // 本月最后一天
+    function showMonthLastDay(date) {
+        var Nowdate = new Date(date);
+        var MonthNextFirstDay = new Date(Nowdate.getFullYear(), Nowdate.getMonth() + 1, 1);
+        var MonthLastDay = new Date(MonthNextFirstDay - 86400000);
+        M = Number(MonthLastDay.getMonth()) + 1;
+        return new Date(MonthLastDay.getFullYear() + "-" + M + "-" + MonthLastDay.getDate() + " 23:59:59").getTime();
+    }
+
+    // 获取上月第一天和最后一天
+    function showPreMonthLastDay() {
+        var nowdays = new Date();
+        var year = nowdays.getFullYear();
+        var month = nowdays.getMonth();
+        if (month == 0) {
+            month = 12;
+            year = year - 1;
+
+        }
+        if (month < 10) {
+            month = '0' + month;
+        }
+        var myDate = new Date(year, month, 0);
+        var startDate = year + '-' + month + '-01 00:00:00'; //上个月第一天
+        var endDate = year + '-' + month + '-' + myDate.getDate() + ' 23:59:00';//上个月最后一天
+        return { startDate, endDate }
+    }
+
+    //获取上周起始时间结束时间、下周起始时间结束时间开始时间和本周起始时间结束时间;（西方）
+    function getTime(n) {
+        var now = new Date();
+        var year = now.getFullYear();
+        //因为月份是从0开始的,所以获取这个月的月份数要加1才行
+        var month = now.getMonth() + 1;
+        var date = now.getDate();
+        var day = now.getDay();
+        //判断是否为周日,如果不是的话,就让今天的day-1(例如星期二就是2-1)
+        if (day !== 0) {
+            n = n + (day - 1);
+        } else {
+            n = n + day;
+        }
+        if (day) {
+            //这个判断是为了解决跨年的问题
+            if (month > 1) {
+                month = month;
+            }
+            //这个判断是为了解决跨年的问题,月份是从0开始的
+            else {
+                year = year - 1;
+                month = 12;
+            }
+        }
+        now.setDate(now.getDate() - n);
+        year = now.getFullYear();
+        month = now.getMonth() + 1;
+        date = now.getDate();
+        var s = year + "-" + (month < 10 ? ('0' + month) : month) + "-" + (date < 10 ? ('0' + date) : date);
+        return s;
+    }
+
+    function getUserOnlineByTime() {
+        var time = $("#s_time").val()
+        if (time == '') {
+            time = new Date()
+        }
+        var tableObj = table.render({
+            elem: '#tables',
+            title: '会员在线列表',
+            url: '/admin/operateManage/userOnlineManage/userOnlineBytime',
+            where: {
+                s_time: time,
+                _csrf: $("#_csrf").val()
+            }, //其他请求参数
+            page: true,
+            limit: 10,
+            cols: [[
+                { field: 'user_id', title: '会员id', align: 'center', sort: true },
+                {
+                    field: 'username', title: '会员账号', align: 'center', templet: function (row) {
+                        return row.user_account.username
+                    }
+                },
+                {
+                    field: 'mobile_phone', title: '会员手机', align: 'center', sort: true, templet: function (row) {
+                        return row.user_account.mobile_phone ? row.user_account.mobile_phone : "-"
+                    }
+                },
+                { field: 'login_time', title: '登录时间', align: 'center', sort: true },
+                {
+                    field: 'createdate', title: '注册时间', align: 'center', sort: true, templet: function (row) {
+                        return row.user_account.createdate
+                    }
+                },
+                { field: 'day_count', title: '当日登录次数', align: 'center', sort: true },
+            ]]
+        });
+    }
+
+    //tips
+    $("#login_num").mouseover(function () {
+        indexOpen = layer.tips("登录的付费会员数", '#login_num',{
+            tips:1
+        });
+    })
+
+    $("#login_num").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#new_login_num").mouseover(function () {
+        indexOpen = layer.tips("新增的付费会员数", '#new_login_num',{
+            tips:1
+        });
+    })
+
+    $("#new_login_num").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#new_bet_race").mouseover(function () {
+        indexOpen = layer.tips("新增会员中参与投注的人数占新增会员的比例", '#new_bet_race',{
+            tips:1
+        });
+    })
+
+    $("#new_bet_race").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#new_bet_num").mouseover(function () {
+        indexOpen = layer.tips("全部参与投注的人数", '#new_bet_num',{
+            tips:1
+        });
+    })
+
+    $("#new_bet_num").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#new_bet_sum").mouseover(function () {
+        indexOpen = layer.tips("全部投注会员的投注总额", '#new_bet_sum',{
+            tips:1
+        });
+    })
+
+    $("#new_bet_sum").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#deduct_sum").mouseover(function () {
+        indexOpen = layer.tips("游戏中抽水的总数", '#deduct_sum',{
+            tips:1
+        });
+    })
+
+    $("#deduct_sum").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#lose_win_sum").mouseover(function () {
+        indexOpen = layer.tips("平台收益（与玩家输赢相反）", '#lose_win_sum',{
+            tips:1
+        });
+    })
+
+    $("#lose_win_sum").mouseout(function () {
+        layer.close(indexOpen)
+    })
+    $("#kill_num_sum").mouseover(function () {
+        indexOpen = layer.tips("平台收益/总投注数", '#kill_num_sum',{
+            tips:1
+        });
+    })
+
+    $("#kill_num_sum").mouseout(function () {
+        layer.close(indexOpen)
+    })
+
+</script>
+
+</html>

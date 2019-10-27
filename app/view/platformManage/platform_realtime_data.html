@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <!-- bootstrap  -->
+    <!-- <link rel="stylesheet" href="/public/admin/css/bootstrap.min.css"> -->
+
+    <style>
+        /* .layui-card{
+            margin: 20px 5%;
+        } */
+        .popup{
+            padding: 20px;
+            display: none;
+        }
+        .btm_width_70{
+            margin-left: 5px; 
+            margin-bottom: 2px; 
+            width: 70px;
+        }
+        .btm_width_100{
+            margin-left: 5px; 
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-row">
+                <div style="float: right;">
+                    <div class="layui-form">
+                        <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                            <select id="s_platform_id" lay-filter="s_platform_id">
+                                <option value="" selected="">所有平台</option>
+                                <% platforms.forEach(function(item) { %>
+                                    <option value="<%= item.platform_id%>"><%=item.platform_id %> --  <%= item.platform_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn layui-btn" id="search">刷新</button>
+                        </div>
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn layui-btn" id="export">导出</button>
+                        </div>
+                    </div>
+                </div>
+           </div>
+
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ,tableObj,exportData ;
+        $(function(){
+            layui.use(['form','layer','laydate','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                initData(); 
+            });
+
+            $("#search").click(function(){
+                initData();
+            })
+            $("#export").click(function(){
+                let data = {
+                    platform_id:$("#s_platform_id").val(),
+                    _csrf:$("#_csrf").val()
+                };
+                let url = '/admin/platformManage/platformRealtimeData/export';
+                let xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            let blob = this.response; //使用response作为返回，而非responseText
+                            let reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            let a = document.createElement("a");
+                            a.download = "今日平台数据.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            })
+        })
+
+        function initData(){
+            let total_games = 0;
+            let win_games = 0;
+            let bet_number = 0;
+            let valid_bet = 0;
+            let total_win_gold = 0;
+            let lost_gold = 0;
+            let win_gold = 0;
+            let deduct_gold = 0;
+            let total_lose = 0;
+            let duration = 0;
+
+            tableObj = table.render({
+                elem: '#tables',
+                title: '实时平台数据', //导出数据时的文件名
+                url:'/admin/platformManage/platformRealtimeData/list',
+                where:{
+                    platform_id:$("#s_platform_id").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'platform', title: '平台ID', align:'center',sort: true},
+                    {field:'total_games', title: '总局数',align:'center',sort: true,
+                        templet: function(row){
+                            total_games += row.total_games;
+                            return row.total_games;
+                        }
+                    },
+                    {field:'bet_number', title: '投注人数',align:'center',sort: true,
+                        templet: function(row){
+                            bet_number += row.bet_number;
+                            return row.bet_number;
+                        }
+                    },
+                    {field:'valid_bet', title: '总投注',align:'center',sort: true,
+                        templet: function(row){
+                            valid_bet += row.valid_bet
+                            win_gold += row.win_gold;
+                            lost_gold += row.lost_gold;
+                            return (parseInt(row.valid_bet) / 100).toFixed(2);
+                        }
+                    },
+                    {field:'last_win', title: '平台盈利',align:'center',sort: true,
+                        templet: function(row){
+                            let lost_win = ((parseFloat( (row.win_gold  -  row.lost_gold  - row.deduct_gold) /100 ) ).toFixed(2) * -1).toFixed(2);
+                            total_win_gold += +lost_win;
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                        }
+                    },
+                    {field:'last_win', title: '平台杀数',align:'center',sort: true,
+                        templet: function(row) {
+                            let kill_number = parseFloat((row.win_gold - row.lost_gold) / row.valid_bet  * -100).toFixed(2);
+                            if (typeof(kill_number) === 'number' || typeof(kill_number) === 'string') return `${kill_number}%`;
+                            return '';
+                        }
+                    },
+                    
+                    {field:'deduct_gold', title: '抽水',align:'center',sort: true,
+                        templet: function(row){
+                            deduct_gold += row.deduct_gold
+                            return (parseInt(row.deduct_gold) / 100).toFixed(2);
+                        }
+                    },
+                    {field:'deduct_gold', title: '人均投注',align:'center',sort: true,
+                        templet: function(row){
+                            return (parseInt(row.valid_bet / row.bet_number) / 100).toFixed(2);
+                        }
+                    },
+                    {field:'deduct_gold', title: '人均输赢',align:'center',sort: true,
+                        templet: function(row){
+                            let money = parseInt((row.win_gold - row.lost_gold) / row.bet_number / 100).toFixed(2);
+                            return money;
+                        }
+                    },
+                    {field:'deduct_gold', title: '人均抽水',align:'center',sort: true,
+                        templet: function(row){
+                            return (parseInt(row.deduct_gold / row.bet_number) / 100).toFixed(2);
+                        }
+                    },
+                    {field:'deduct_gold', title: '人均游戏时长(秒)',align:'center',sort: true,
+                        templet: function(row){
+                            duration += row.duration;
+                            return (parseInt(row.duration) / row.bet_number).toFixed(0);
+                        }
+                    },
+                    {field:'win_bl', title: '赢局占比',align:'center',
+                        templet: function(row){
+                            win_games+= row.win_games;
+                            return  row.total_games ? (parseFloat(row.win_games / row.total_games) * 100).toFixed(2) + "%" : "0%";
+                        }
+                    },
+                    {field:'cz', title: '操作',align:'center',width:80,
+                        templet: function(row) {
+                            if(row.create_time == '汇总') {
+                                return ''
+                            }
+                            return `<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick="detail(${row.platform})">明细</button>`;
+                        }
+                    }
+                ]],
+                done: function (res, curr, count) {
+                    // console.log($('.layui-table-header table')[0]);
+                    var k = $('#total').find('td:first').text()
+                    if (k=='汇总') {
+                        console.log('hahah')
+                        $('#total').remove()
+                    }
+                    $('.layui-table-header table').append(
+                        `<tbody style='text-align:center;'>
+                            <tr id='total'>
+                                <td>汇总</td>
+                                <td>${total_games}</td>
+                                <td>${bet_number}</td>
+                                <td>${(parseInt(valid_bet) / 100).toFixed(2)}</td>
+                                <td>${total_win_gold.toFixed(2)}</td>
+                                <td>${(typeof(parseFloat((win_gold - lost_gold) / valid_bet  * -100).toFixed(2)) === 'number' || typeof(parseFloat((win_gold - lost_gold) / valid_bet  * -100).toFixed(2)) === 'string' &&(valid_bet != 0 && bet_number!=0)) ? parseFloat((win_gold - lost_gold) / valid_bet  * -100).toFixed(2)+"%":'0'}</td>
+                                <td>${(parseInt(deduct_gold) / 100).toFixed(2)}</td>
+                                <td>${(valid_bet != 0 && bet_number!=0) ? (parseInt(valid_bet / bet_number) / 100).toFixed(2):0}</td>
+                                <td>${(valid_bet != 0 && bet_number!=0)?parseInt((win_gold - lost_gold) / bet_number / 100).toFixed(2):0}</td>
+                                <td>${(valid_bet != 0 && bet_number!=0)?(parseInt(deduct_gold / bet_number) / 100).toFixed(2):0}</td>
+                                <td>${(valid_bet != 0 && bet_number!=0)?(parseInt(duration) / bet_number).toFixed(2):0}</td>
+                                <td>${total_games ? (parseFloat(win_games / total_games) * 100).toFixed(2) + "%" : "0%"}</td>
+                                <td>-</td>
+                            </tr>
+                        <tbody>
+                        `);
+                    totalData = res.data;
+                    var e = $(".layui-table-header .layui-table tr:first-child");
+                    e.css("font-weight","bold");
+                    total_games = 0;
+                    win_games = 0;
+                    bet_number = 0;
+                    valid_bet = 0;
+                    total_win_gold = 0;
+                    lost_gold = 0;
+                    win_gold = 0;
+                    deduct_gold = 0;
+                    total_lose = 0;
+                    duration = 0;
+                }
+            });
+            currentData = null;
+            //监听行单击事件（单击事件为：rowDouble）
+            table.on('row(tables)', function(obj){
+                var data = obj.data;
+                
+                currentData = data;
+                //标注选中样式
+                obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+            });
+        }
+
+        function detail(platform_id) {
+            date = getBeforeDate(0);
+            layer.open({
+                type: 2,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //不显示关闭按钮
+                title: '会员牌局记录',
+                anim: 2,
+                area: ['100%', '100%'],
+                shadeClose: false, //开启遮罩关闭
+                content: `/admin/platformManage/platformHistoryData/cardIndex?date=${date}&platform_id=${platform_id}`,
+            });
+            return;
+            table.render({
+                elem: '#detail_tables',
+                title: '会员牌局记录', //导出数据时的文件名
+                url:'/admin/platformManage/platformHistoryData/findCard',
+                where:{
+                    platform_id: platform_id,
+                    date: date,
+                    count:total_games,
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'start_time', title: '开始时间',width:160, align:'center',sort: true},
+                    {field:'end_time', title: '游戏时长',width:80, align:'center',sort: true,
+                        templet: function(row){
+                            console.log(row)
+                            return ((new Date(row.end_time).getTime() - new Date(row.start_time).getTime()) / 1000) + "s";
+                        }    
+                    },
+                    {field:'game_no',title: '牌局编号', align:'center',
+                        templet: function(row){
+                            return "<a href='#' style='color:#4395ff' onclick='seeGameNO(\""+row.game_no+"\")'>"+row.game_no+"</a>";
+                        }
+                    },
+                    {field:'game_name', title: '游戏名称' ,align:'center'},
+                    {field:'room_name', title: '房间名称'  ,align:'center'},
+                    {field:'room_type', title: '房间模式'  ,align:'center',
+                        templet: function(row){
+                            if( row.room_type == 1 ){
+                                return "站点独立匹配";
+                            }else if( row.room_type == 2 ){
+                                return "平台匹配";
+                            }else if( row.room_type == 3 ){
+                                return "机器人匹配";
+                            }else if( row.room_type == 4 ){
+                                return "<span style='color:red'>追杀</span>";
+                            }else if( row.room_type == 5 ){
+                                return "<span style='color:green'>放水</span>";
+                            }else if( row.room_type == 6 ){
+                                return "公共";
+                            }else if( row.room_type == 7 ){
+                                return "高级追杀";
+                            }else{
+                                return "未知:" + row.room_type;
+                            }
+                        }
+                    },
+                    {field:'username', title: '会员账号'  ,align:'center'},
+                    {field:'platform_name', title: '平台'  ,align:'center',
+                        templet: function(row){
+                            return row.platform_name!=null?row.platform_name:'/'
+                        }
+                    },
+                    {field:'pos_id', title: '座位号'  ,align:'center',width:78,sort:true},
+                    {field:'valid_bet', title: '会员投注'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.valid_bet / 100).toFixed(2));
+                        }
+                    },
+                    {field:'profit', title: '会员输赢'  ,align:'center',sort: true,
+                        templet: function(row){
+                            let lost_win = parseFloat((row.profit / 100).toFixed(2));
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                            // return parseFloat((row.profit / 100).toFixed(2));
+                        }
+                    },
+                    {field:'deduct', title: '抽水'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.deduct / 100).toFixed(2));
+                        }
+                    },
+                ]],
+            });
+        }
+
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+    </script>      
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+    <!-- bootstrap  -->
+    <!-- <link rel="stylesheet" href="/public/admin/css/bootstrap.min.css"> -->
+
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px;">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-row">
+           
+                <div class="layui-col-md12" style="text-align: right">
+                    <div class="layui-form">
+                        <div class="layui-inline" >
+                            <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;text-align: left;">
+                                <select id="s_platform_id" lay-filter="s_platform_id">
+                                    <% platforms.forEach(function(item) { %>
+                                        <option value="<%= item.platform_id%>"
+                                          <%if(item.platform_id==platform_id) {%>selected=''<%}%>
+                                        ><%=item.platform_id %> -- <%= item.platform_name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="layui-input-inline" style="margin-left: 5px; width: 180px;">
+                                <input type="text" id="start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-inline" >
+                                <div class="layui-input-inline">
+                                    <span>-</span>
+                                </div>
+                            </div>
+                            <div class="layui-input-inline" style="margin-left: 5px; width: 180px;">
+                                <input type="text" id="end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn layui-btn" id="search">搜索</button>
+                        </div>
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn layui-btn" id="exportData">导出</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+          <table class="layui-hide" id="detail_tables" lay-filter="detail_tables"></table>
+        </div>
+    </div>
+</body>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/clipboard.min.js"></script>
+
+    <script>
+        var clipboard;
+        let platform_id = '<%=platform_id%>';
+        let date = '<%=date%>';
+        $(function(){
+            clipboard = new ClipboardJS('.js-clipboard');
+            clipboard.on('success', function(e) {
+                console.log(e)
+                layer.msg('复制成功');
+            });
+
+            clipboard.on('error', function(e) {
+                console.log(e)
+                layer.msg('复制失败');
+            });
+
+        });
+        var form, layer , table ,tableObj,exportData ;
+        $(function(){
+            layui.use(['form','layer','laydate','table'], function() {
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                laydate.render({
+                    elem: '#start_date',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    value: date+' 00:00:00',
+                    type:'datetime'
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    value: date+' 23:59:59',
+                    type:'datetime'
+                });
+                initData();
+            });
+
+            $("#search").click(function() {
+                platform_id = $("#s_platform_id").val(),
+                date = $("#date").val(),
+                console.log('platform_id: ', platform_id)
+                console.log('date: ', date)
+
+                initData();
+            })
+
+            $('#exportData').click(exportData);
+          });
+
+          function exportData() {
+            let data = {
+                platformName: $("#s_platform_id option[selected]").text(),
+                // date:$("#date").val(),
+                start_date:$("#start_date").val(),
+                end_date:$("#end_date").val(),
+                platform_id:$("#s_platform_id").val(),
+                _csrf: $("#_csrf").val(),
+            };
+            let url = '/admin/platformManage/platformHistoryData/cardExport';
+            let xhr = new XMLHttpRequest();
+                xhr.open('post', url, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                data = JSON.stringify(data);
+                xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                xhr.onload = function() {
+                    if (this.status === 200) {  
+                        let blob = this.response; //使用response作为返回，而非responseText
+                        let reader = new FileReader();
+                        reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                        reader.onload = function(e) {
+                        // 转换完成，创建一个a标签用于下载
+                        let a = document.createElement("a");
+                        a.download = "会员牌局记录.xlsx";
+                        a.href = e.target.result;
+                        a.click();
+                        layer.msg('下载成功');
+                        };
+                    } else {
+                        layer.msg('下载失败');
+                    }
+                };
+                xhr.send(data);
+        }
+        function initData() {
+            const TYPE = {
+                1: "站点独立匹配",
+                2: "平台匹配",
+                3: "机器人匹配",
+                4: "<span style='color:red'>追杀</span>",
+                5: "<span style='color:green'>放水</span>",
+                6: "公共",
+                7: "高级追杀",
+            };
+            tableObj = table.render({
+                elem: '#detail_tables',
+                title: '会员牌局记录',
+                url:'/admin/platformManage/platformHistoryData/findCard',
+                where:{
+                    platform_id,
+                    // date,
+                    start_date:$("#start_date").val(),
+                    end_date:$("#end_date").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'start_time', title: '开始时间',width:160, align:'center',sort: true},
+                    {field:'end_time', title: '游戏时长',width:80, align:'center',sort: true,
+                        templet: function(row){
+                            return ((new Date(row.end_time).getTime() - new Date(row.start_time).getTime()) / 1000) + "s";
+                        }    
+                    },
+                    {field:'game_no',title: '牌局编号', align:'center',
+                        templet: function(row){
+                            return "<a href='#' style='color:#4395ff' onclick='seeGameNO(\""+row.game_no+"\")'>"+row.game_no+"</a>";
+                        }
+                    },
+                    {field:'game_name', title: '游戏名称' ,align:'center'},
+                    {field:'room_name', title: '房间名称'  ,align:'center'},
+                    {field:'room_type', title: '房间模式'  ,align:'center',
+                        templet: function(row){
+                            return TYPE[row.room_type] || '未知';
+                        }
+                    },
+                    {field:'username', title: '会员账号'  ,align:'center'},
+                    {field:'platform_name', title: '平台'  ,align:'center',
+                        templet: function(row){
+                            return row.platform_name!=null?row.platform_name:'/'
+                        }
+                    },
+                    // {field:'pos_id', title: '座位号'  ,align:'center',width:78,sort:true},
+                    {field:'valid_bet', title: '会员投注'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.valid_bet / 100).toFixed(2));
+                        }
+                    },
+                    {field:'profit', title: '会员输赢'  ,align:'center',sort: true,
+                        templet: function(row){
+                            let lost_win = parseFloat((row.profit / 100).toFixed(2));
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                            // return parseFloat((row.profit / 100).toFixed(2));
+                        }
+                    },
+                    {field:'deduct', title: '抽水'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.deduct / 100).toFixed(2));
+                        }
+                    },
+                ]],
+        });
+    }
+
+        function seeGameNO(game_no){
+            layer.open({
+            type: 1,
+            title:'牌局编号',
+            skin: 'layui-layer-demo', //样式类名
+            area: ['300px', '120px'], //宽高
+            content:`<div>
+                      <div class="copy_cont" style="text-align: center;margin:10px 0px" >${game_no}</div>
+                      <button class="js-clipboard layui-btn layui-btn-sm" style="margin: 0 auto;display: block" data-clipboard-target=".copy_cont">复制</button>
+                  </div>`
+            });
+        }
+
+
+    </script>      
+</html>

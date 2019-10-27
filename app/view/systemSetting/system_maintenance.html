@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+  
+</head>
+<body>
+    
+        <div class="layui-card">
+                <div style="float: left;">
+                    <div class="layui-form">
+                        <div class="layui-input-inline btm_width_100">
+                                <button type="button" class="layui-btn  layui-btn-danger" onclick="openGamePlatformPopup()">维护游戏平台</button>
+                        </div>
+                        <br/>
+                        <p style="color: red">⚠当前游戏服务器处于开放状态,进行游戏平台维护,系统将会进行维护,维护期间APP前端无法登录!</p>
+                        <br/>
+                        <label for="" style="font-size: 20px">维护原因:</label> <textarea type="text" id="reason" class="layui-textarea"></textarea>
+                    </div>
+                    <br/>
+                    <div class="layui-input-inline btm_width_100">
+                            <button type="button" class="layui-btn" onclick="openrecordPopup()">维护记录</button>
+                    </div>
+                </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+        </div>
+    <div class="popup" id="recordList">
+         <table class="layui-hide" id="tables" lay-filter="tables"></table>
+     </div>
+    
+</body>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<script src="/public/admin/js/md5.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+         var form, layer , table , indexPopup ;
+        var STATUS = {
+                0: '正常',
+                1: '关闭',
+            };
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+            });
+        })
+        //维护游戏平台监听事件
+        function openGamePlatformPopup(){
+            var reason = $("#reason").val();
+            if( reason == "" ){
+                layer.msg('维护原因不能为空！');
+                return;
+            }
+            layer.confirm("是否确认维护游戏平台？", {
+                btn: ['确定','取消'] //按钮
+            },function(){
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/systemSetting/systemMaintenance/saverecord",
+                type:"POST",
+                data:{
+                    reason:reason,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        },function(){
+            closePopup();
+            });
+        }
+        //维护记录监听事件
+        function openrecordPopup(){
+            var table =layer.open({
+                type: 1,
+                shade: false,
+                maxmin: true,
+                content: $("#recordList"),
+                title: '操作记录',
+                area: ['100%', '100%'],
+                });
+                recordList();
+        }
+        function recordList(){
+            user=table.render({
+                elem: '#tables',
+                title: '维护记录', //导出数据时的文件名
+                url:'/admin/systemSetting/systemMaintenance/list',
+                where:{
+                    //搜索传入的值
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page: true,
+                limit:10,
+                cols: [[
+                    {field:'create_time', title: '维护时间', align:'center',sort:true},
+                    {field:'create_operator', title: '操作人', align:'center'},
+                    {field:'reason', title: '操作原因', align:'center'},
+                ]],
+                done: function (res, curr, count) {
+                exportData=res.data;
+                }
+            });
+        }
+        function closePopup(){
+            $("#reason").val("");
+        }
+    </script>      
+</html>

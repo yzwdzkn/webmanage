@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+   
+</head>
+<body>
+    
+    <div style="padding: 15px;">
+
+        <div class="layui-card">
+            <div class="card-header">
+                <span class="spanTitle"><%=title%></span>
+                <br/>
+                <fieldset class="layui-elem-field" style="padding-bottom:10px; width:100%">
+                    <legend>基础信息</legend>
+                    <div class="layui-field-box">
+                        <div class="layui-row layui-col-space10">
+                            <div class="layui-col-md4">
+                                <div>创建时间: 
+                                    <b id="create_time">2019-08-02</b>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-row layui-col-space10">
+                            <div class="layui-col-md4">
+                                <div>开盘费用:
+                                    <b id="opening_fee">8888</b>
+                                </div>
+                            </div>
+                            <div class="layui-col-md4">
+                                <div>线路费用:
+                                    <b id="line_fee">9999</b>
+                                </div>
+                            </div>
+                            <div class="layui-col-md4">
+                                <div>其他费用:
+                                    <b id="other_fee">10000</b>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-row layui-col-space10">
+                            <div class="layui-col-md4">
+                                    <div>费用总计:
+                                        <b id='total'>99999</b>
+                                    </div>
+                            </div>
+                            <div class="layui-col-md4">
+                                    <div>已缴费用:
+                                        <b id="pay">66666</b>
+                                    </div>
+                            </div>
+                            <div class="layui-col-md4">
+                                    <div>待缴费用:
+                                        <b id="not_pay">33333</b>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                  </fieldset>
+
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+                </div>
+            <div class="layui-card-body">
+                <div class="layui-form" style="text-align: right">
+                        <div class="layui-row">
+                            <div class="layui-input-inline" style="width: 160px;">
+                                <input type="text" class="layui-input" id="s_start_date" lay-verify="date" placeholder="开始时间" autocomplete="off">
+                            </div>
+                            <div class="layui-input-inline" >
+                                <span>-</span>
+                            </div>
+                            <div class="layui-input-inline" style="width: 160px;">
+                                <input type="text" class="layui-input" id="s_end_date" lay-verify="date" placeholder="开始时间" autocomplete="off">
+                            </div>
+                
+                                <div class="layui-input-inline" style="margin-left: 10px;text-align: left">
+                                    <select name="s_bill_type" id="s_bill_type">
+                                        <option value="">费用类型</option>
+                                        <option value="1">线路费</option>
+                                        <option value="2">其他</option>
+                                    </select>
+                                </div>
+
+                                <div class="layui-input-inline" style="margin-left: 10px; margin-right: 10px;text-align: left;">
+                                    <select name="s_status" id="s_status">
+                                        <option value="">状态</option>
+                                        <option value="1">已缴费</option>
+                                        <option value="2">待缴费</option>
+                                        <option value="3">免收</option>
+                                    </select>
+                                </div>
+            
+                                <div class="layui-input-inline btm_width_140">
+                                        <button type="button" class="layui-btn" id="search">搜索</button>
+                                        <button type="button" class="layui-btn" onclick="exportFile()">导出</button>
+                                </div>
+                            </div>
+                    </div>
+                    <br>
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<div id="authorizationPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="role_id">
+        <ul id="treeData" class="ztree"></ul>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveAuthorization()">提交</button>
+                <button class="layui-btn" onclick="closeAuthorizationPopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<script type="text/javascript" src="/public/admin/js/myExcel.js"></script>
+<script type="text/javascript" src="/public/admin/js/xlsx.core.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+    <script>
+        var form, layer , table , indexPopup ;
+        var BILL_TYPE = {
+                1: '线路费',
+                2: '其他',
+            };
+
+        var STATUS = {
+                1: '已缴',
+                2: '待缴',
+                3: '免收'
+            };
+        $(function(){
+            layui.use(['element','form','layer','table','laydate'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                var element = layui.element;
+
+                laydate.render({
+                    elem: '#s_start_date',
+                    type:"month",
+                    value: ''
+                });
+                laydate.render({
+                    elem: '#s_end_date',
+                    type:"month",
+                    value: ''
+                });
+                initData();
+                baseInfo() 
+            });
+
+
+
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+
+        function baseInfo() {
+            $.ajax({
+                    url:`/admin/billManage/platformBillManage/baseInfo`,
+                    type:"GET",
+                    data:{_csrf:$("#_csrf").val()},
+                    timeout: 60000, //1分钟
+                    success: function(data){
+                        if (data.status == 0) {
+                            $("#line_fee").text(data.data.line_bill)  //线路费用
+                            $("#total").text(data.data.total)         // 费用总计
+                            $("#other_fee").text(data.data.other_fee) //其他费用
+                            $("#pay").text(data.data.pay)             //已缴费用   
+                            $("#not_pay").text(data.data.not_pay)     // 待缴费用
+                        } else {
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+        }
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '平台账单', //导出数据时的文件名
+                url:'/admin/billManage/platformBillManage/list',
+                where:{
+                    start_date: $("#s_start_date").val(),
+                    end_date: $("#s_end_date").val(),
+                    status:$("#s_status").val(),
+                    bill_type:$("#s_bill_type").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page: true,
+                limit:10,
+                cols: [[
+                    {field:'year', title: '账单年份', align:'center', sort:true,templet: function(row) {
+                        return row.bill_date.split('-')[0]
+                    }},
+                    {field:'month', title: '账单月份', align:'center', sort:true,templet:function(row) {
+                        return row.bill_date.split('-')[1]
+                    }},
+                    {field:'bill_type', title: '费用类型', align:'center', templet: function(row) {
+                        return BILL_TYPE[row.bill_type]
+                    }},
+                    {field:'bill', title: '金额', align:'center' ,sort:true},
+                    {field:'pay_time', title: '缴费时间', align:'center',sort:true},
+                    {field:'status', title: '状态', align:'center', templet: function(row) {
+                        return STATUS[row.status]
+                    }},
+                ]]
+            });
+
+        }
+    
+        function exportFile() {
+            $.ajax({
+                url:'/admin/billManage/platformBillManage/export',
+                type:"GET",
+                data:{
+                    start_date: $("#s_start_date").val(),
+                    end_date: $("#s_end_date").val(),
+                    status:$("#s_status").val(),
+                    bill_type:$("#s_bill_type").val(),
+                    _csrf:$("#_csrf").val()
+                },
+                timeout: 60000, //1分钟
+                success: function(data){
+                    var rows = data.data
+                    console.log('data: ', data.data)
+                    exportSpecialExcel(rows,'平台账单')
+                },
+                error: function(xhr, status, error){
+                    console.log('##')
+                    console.log("[ERROR] - ",error);
+                }
+            })
+        }
+
+     </script>      
+</html>

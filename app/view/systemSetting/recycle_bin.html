@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/static/dist/css/zui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    
+</head>
+<body>
+    
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>       
+                    <div class="layui-form" style="text-align: right">
+                        <div class="layui-inline" >
+                            <div class="layui-input-block"style=" width:180px;margin-left: 20px;text-align:left;">
+                                <select id="s_record_page" >
+                                    <option value="">所有功能分页</option>
+                                    <option value="HorseLight">跑马灯管理</option>
+                                    <option value="GameInfo">游戏设置</option>
+                                    <option value="Admin">用户管理</option>
+                                    <option value="Role">权限管理</option> <!-- dq -->
+                                    <option value="Menu">菜单管理</option>
+                                    <option value="AdminWhitelist">IP白名单</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-input-inline" style="width: 160px;">
+                            <input type="text" id="s_start_time" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                        </div>
+                        <div class="layui-input-inline" >
+                            <span>-</span>
+                        </div>
+                        
+                        <div class="layui-input-inline" style="width: 160px;">
+                            <input type="text" id="s_end_time" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                        </div>
+
+                        
+    
+                        <div class="layui-input-inline" style="width: 250px;margin-left: 5px;">
+                                <input type="text" id="s_record_id"  placeholder="记录ID" class="layui-input">
+                        </div>
+
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                        </div>
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn" id="clean">清空回收站</button>
+                        </div>
+                    </div>
+
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+</body>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup, notice ;
+        var OPERATION_TYPE = {
+            HorseLight:'跑马灯管理',
+            GameInfo:"游戏设置",
+            Admin:"用户管理",
+            Role:"权限管理", // dq
+            Menu:"菜单管理",
+            AdminWhitelist:"IP白名单",
+        }
+        // let s = new Date(Date.now()-(1000 * 3600));
+        // let start =s.getFullYear() + '-' + (s.getMonth() + 1) + '-' + s.getDate() + ' ' + s.getHours() + ':' + s.getMinutes() + ':' + s.getSeconds();
+        // let e = new Date(Date.now()-(1000 * 3600));
+        // let end =  e.getFullYear() + '-' + (e.getMonth() + 1) + '-' + e.getDate() + ' ' + e.getHours() + ':' + e.getMinutes() + ':' + e.getSeconds();
+        $(function(){
+            layui.config({
+                base: '/public/admin/static/layui/dist/',
+            });
+            layui.use(['element','form','layer','table','laydate', 'notice'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                var laydate = layui.laydate;
+                laydate.render({
+                    elem: '#s_start_time',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    // value: new Date(Date.now()-(1000 * 3600)),
+                });
+                laydate.render({
+                    elem: '#s_end_time',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    // value: new Date(Date.now()+(1000 * 3600)),
+                });
+                const today = new Date();
+                const sevenDaysBefore = new Date(Date.now()-(1000 * 3600*24*7))
+                var start_date = dateFomat(sevenDaysBefore);
+                var date = dateFomat(today);
+
+                $("#s_start_time").val(start_date);
+                $("#s_end_time").val(date);
+                initData();    
+                // setTimeout(() => {
+                //     initData();         
+                // }, 100);
+                $('#clean').click(function() {
+                    cleanBin();
+                });
+            });
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+        function initData(){
+            console.log($("#s_end_time").val())
+            tableObj = table.render({
+                elem: '#tables',
+                title: '操作日志', //导出数据时的文件名
+                url:'/admin/systemSetting/recycleBin/list',
+                where:{
+                    start_time:$("#s_start_time").val(),
+                    end_time:$("#s_end_time").val(),
+                    record_page: $("#s_record_page").val(),
+                    record_id: $("#s_record_id").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                liimt:10,
+                cols: [[
+                    {field:'id', title: '编号', align:'center',sort: true},
+                    {field:'record_contents', title: '记录内容', align:'center'},
+                    {field:'record_page', title: '功能分页', align:'center',
+                        templet(row){
+                            return OPERATION_TYPE[row.record_page];
+                        }
+                    },
+                    {field:'record_id', title: '记录ID', align:'center'},
+                    {field:'operator',title: '操作人', align:'center'},
+                    {field:'date', title: '删除时间',  align:'center'},
+                    {field:'cz', title: '操作',  align:'center',hide:!flag,
+                        templet(row){
+                            var cz='';
+                            cz+="<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick=\"recover('"+row.record_page+"',"+row.record_id+","+row.id+")\">恢复</button> <% } %>";
+                            cz+="<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick=\"shiftDelete('"+row.record_page+"',"+row.record_id+","+row.id+")\">彻底删除</button> <% } %>";
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+        }
+        function recover(table_name,id,self_id){
+            $.ajax({
+                    url:"/admin/systemSetting/recycleBin/recover",
+                    type:"POST",
+                    data:{
+                        table_name:table_name,
+                        id:id,
+                        self_id:self_id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        initData();
+                        layer.msg("恢复成功");
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+        }
+        function shiftDelete(table_name,id,self_id){
+            $.ajax({
+                    url:"/admin/systemSetting/recycleBin/shiftDelete",
+                    type:"POST",
+                    data:{
+                        table_name:table_name,
+                        id:id,
+                        self_id:self_id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        initData();
+                        layer.msg("删除成功");
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+        }
+
+        // 清空回收站
+        function cleanBin() {
+            let cleanIndex;
+            let warningIndex = layer.open({
+                type: 1,
+                title: '警告', //不显示标题栏
+                area: ['330px;', '230px;']
+                ,shade: 0.5
+                ,id: 'LAY_layuipro' //设定一个id，防止重复弹出
+                ,btn: ['确定', '取消']
+                ,btnAlign: 'c'
+                ,moveType: 0 //拖拽模式，0或者1
+                ,content: '<div style="padding: 50px; line-height: 22px; background-color: #F8F8F8;  font-weight: 300;"><i class="icon icon-warning-sign" style="color: #BB3333;font-size: 30px;"></i>点击确定将删除回收站所有数据</div>'
+                ,success: function(layero) {
+                   
+                },
+                btn1: function() {
+                    cleanIndex = layer.load(0, {shade: false}); //0代表加载的风格，支持0-2
+                    $.ajax({
+                        url:"/admin/systemSetting/recycleBin/deleteAll",
+                        type:"POST",
+                        data:{
+                            _csrf:$("#_csrf").val(),
+                        },
+                        timeout:60000, //1分钟
+                        success:function(data) {
+                            initData();
+                            layer.close(cleanIndex);
+                            layer.close(warningIndex);
+                            layer.msg(`成功删除${data.count || 0}条记录`);
+                        },
+                        error: function(xhr, status, error){
+                            console.log("[ERROR] - ",error);
+                            layer.close(warningIndex);
+                            layer.close(index);
+                        }
+                    });
+                },
+                btn2: function() {
+                    layer.close(cleanIndex);
+                }
+            });
+        }
+
+        function dateFomat(date) {
+            let year = date.getFullYear();
+            let mon = date.getMonth() + 1;
+            let day = date.getDate();
+            let hour = date.getHours().toString().padStart(2, 0);
+            let minute = date.getMinutes().toString().padStart(2, 0);
+            let second = date.getSeconds().toString().padStart(2, 0);
+            return `${year}-${mon}-${day} ${hour}:${minute}:${second}`;
+        }
+    </script>      
+</html>

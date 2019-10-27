@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+    <style>
+         /* .layui-card{
+            margin: 20px 5%;
+        } */
+        /* .spanTitle{
+            font-size: 26px;
+        } */
+        .popup{
+            padding: 20px;
+            display: none;
+        }
+        .btm_width_70{
+            margin-left: 5px; 
+            margin-bottom: 2px; 
+            width: 70px;
+        }
+        .btm_width_100{
+            margin-left: 5px; 
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <div style="padding: 15px;"> -->
+        <div class="layui-card">
+            <div class="card-header" style="padding-bottom:10px;">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <div class="layui-row">
+                <div style="float: left;">
+                    <div class="layui-form">
+                        <div class="layui-input-inline btm_width_100">
+                            <% if( childMenu.includes('bt0') ){ %> 
+                                <button type="button" class="layui-btn layui-btn-primary" onclick="openPlatfromPopup(0)">添加平台</button>
+                            <% } %> 
+                        </div>
+                        <div class="layui-input-inline btm_width_100">
+                            <% if( childMenu.includes('bt0') ){ %> 
+                                <button type="button" class="layui-btn layui-btn-primary" onclick="openVersionPopup(0)">批量更新版本号</button>
+                            <% } %> 
+                        </div>
+                    </div>
+                </div>
+                <div style="float: right;">
+                    <div class="layui-form">
+                        <div class="layui-inline" style=" width: 150px;">
+                            <input type="text" id="s_platfrom_id"  placeholder="平台ID" class="layui-input">
+                        </div>
+                        <div class="layui-inline" style=" width: 180px;">
+                            <input type="text" id="s_platfrom_name"  placeholder="平台名称" class="layui-input">
+                        </div>
+                        
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn layui-btn" id="search">搜索</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+    <!-- </div> -->
+
+</body>
+
+<div id="czPopup" class="popup">
+    <div class="layui-form" action="">
+        <div class="layui-tab" lay-filter="tabs">
+            <ul class="layui-tab-title" id="cz_elements">
+                <% if( childMenu.includes('bt0') ){ %> 
+                    <li class="layui-this" lay-id="1">编辑</li>
+                <% } %>
+                <% if( childMenu.includes('bt1') ){ %> 
+                    <li  lay-id="2">上分</li>
+                <% } %>
+
+                <% if( childMenu.includes('bt2') ){ %> 
+                    <li  lay-id="3">下分</li>
+                <% } %>
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+                    <% if( childMenu.includes('bt0') ){ %> 
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">平台名称</label>
+                            <div class="layui-input-inline">
+                                <input type="hidden" id="platform_id" class="layui-input">
+                                <input type="text" id="platform_name" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">游戏版本号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="version" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+            
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">后台校验码</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="md5_key" class="layui-input">
+                            </div>
+                            <i class="ti-help-alt" id='help_s_md5_key1' style="height:38px;line-height: 38px;"></i>
+                            <button type="button" style="margin-top: 4px;" class="layui-btn layui-btn-sm" onclick="RandomStr('md5_key',16)">随机生成</button>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">平台校验码</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="des_key" class="layui-input">
+                            </div>
+                            <i class="ti-help-alt" id='help_s_des_key1' style="height:38px;line-height: 38px;"></i>
+                            <button type="button" style="margin-top: -4px;" class="layui-btn layui-btn-sm" onclick="RandomStr('des_key',16)">随机生成</button>
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+
+                        <div class="layui-inline">
+                            <label class="layui-form-label">会员下线回调接口地址</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="ofline_back_url" class="layui-input">
+
+                            </div>
+                            <i class="ti-help-alt" id='help_ofline_back_url1' style="height:38px;line-height: 38px;"></i>
+                        </div>
+                    </div>
+            
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">合作方式</label>
+                            <div class="layui-input-inline">
+                                <select id="cooperation_type">
+                                    <option value="0" selected="">信用</option>
+                                    <option value="1">售分</option>
+                                </select>
+                            </div>
+                            <i class="ti-help-alt" id='help_cooperation_type1' style="height:38px;line-height: 38px;"></i>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">分成比例</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="rate" class="layui-input">
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="layui-form-item">  
+                        <div class="layui-inline">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-inline">
+                                <input type="radio" name="status" value="0" title="开启" checked>
+                                <input type="radio" name="status" value="1" title="关闭">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">币种</label>
+                            <div class="layui-input-inline">
+                            <!-- <input type="text" id="coin_type" class="layui-input"> -->
+                                <select id="coin_type">
+                                    <option value="人民币" selected="">人民币</option>
+                                    <option value="美元">美元</option>
+                                    <option value="比索">比索</option>
+                                    <option value="泰铢">泰铢</option>
+                                    <option value="越南盾">越南盾</option>
+                                    <option value="缅元">缅元</option>
+                                    <option value="卢比">卢比</option>
+                                    <option value="新币">新币</option>
+                                </select>
+                            </div>
+                        </div>
+                        </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">平台描述</label>
+                        <div class="layui-input-block">
+                            <textarea id="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+                        </div>
+                    </div>
+            
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" onclick="savePlatform()">提交</button>
+                            <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+                <% if( childMenu.includes('bt1') ){ %> 
+                    <div class="layui-tab-item">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" id="labelMoney">上分金额</label>
+                            <div class="layui-input-block">
+                                <input type="number" id="s_money" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" onclick="saveInOutMoney(0)">提交</button>
+                                <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+                <% if( childMenu.includes('bt2') ){ %> 
+                    <div class="layui-tab-item">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" id="labelMoney">下分金额</label>
+                            <div class="layui-input-block">
+                                <input type="number" id="x_money" class="layui-input">
+                            </div>
+                        </div>
+                
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" onclick="saveInOutMoney(1)">提交</button>
+                                <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <span>创建时间:<i id="e_create_date"></i></span>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <span>最后修改时间:<i id="e_up_date"></i></span>
+</div>
+
+<div id="platformPopup" class="popup">
+        <div class="layui-form" action="">
+
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">平台ID</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="s_platform_id" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-inline">
+                    <label class="layui-form-label">账户状态</label>
+                    <div class="layui-input-inline">
+                        <input type="radio" name="s_status" value="0" title="开启" checked>
+                        <input type="radio" name="s_status" value="1" title="关闭">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">平台名称</label>
+                    <div class="layui-input-inline">
+                        <!-- <input type="hidden" id="s_platform_name" class="layui-input"> -->
+                        <input type="text" id="s_platform_name" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">游戏版本号</label>
+                    <div class="layui-input-inline">
+                            <input type="text" id="s_version" class="layui-input">
+                    </div>
+                </div>
+            </div>
+    
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">后台校验码</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="s_md5_key" class="layui-input" placeholder="不填则随机生成16位字符串">
+                    </div>
+                    <i class="ti-help-alt" id='help_s_md5_key2' style="height:38px;line-height: 38px;"></i>
+                    <button type="button" style="margin-top: -4px;" class="layui-btn layui-btn-sm" onclick="RandomStr('s_md5_key',16)">随机生成</button>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">平台校验码</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="s_des_key" class="layui-input" placeholder="不填则随机生成16位字符串">
+                    </div>
+                    <i class="ti-help-alt" id='help_s_des_key2' style="height:38px;line-height: 38px;"></i>
+                    <button type="button" style="margin-top: -4px;" class="layui-btn layui-btn-sm" onclick="RandomStr('s_des_key',16)">随机生成</button>
+                </div>
+            </div>
+    
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">币种</label>
+                    <div class="layui-input-inline">
+                    <!-- <input type="text" id="coin_type" class="layui-input"> -->
+                        <select id="s_coin_type" >
+                            <option value="人民币" selected="">人民币</option>
+                            <option value="美元">美元</option>
+                            <option value="比索">比索</option>
+                            <option value="泰铢">泰铢</option>
+                            <option value="越南盾">越南盾</option>
+                            <option value="缅元">缅元</option>
+                            <option value="卢比">卢比</option>
+                            <option value="新币">新币</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">会员下线回调接口地址</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="s_ofline_back_url" class="layui-input">
+                    </div>
+                    <i class="ti-help-alt" id='help_ofline_back_url2' style="height:38px;line-height: 38px;"></i>
+                </div>
+            </div>
+                
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">合作方式</label>
+                    <div class="layui-input-inline">
+                        <select id="s_cooperation_type">
+                            <option value="0" selected="">信用</option>
+                            <option value="1">售分</option>
+                        </select>
+                    </div>
+                    <i class="ti-help-alt" id="help_cooperation_type2" style="height:38px;line-height: 38px;"></i>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">分成比例</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="s_rate" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">平台描述</label>
+                <div class="layui-input-block">
+                    <textarea id="s_description" placeholder="请输入内容" class="layui-textarea"></textarea>
+                </div>
+            </div>
+    
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" onclick="saveAddPlatform()">提交</button>
+                    <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    <div id="VersionPopup" class="popup">
+        <div class="layui-form" action="">
+    
+            <div class="layui-form-item">
+                <label class="layui-form-label">平台ID</label>
+                <div class="layui-input-block">
+                    <input type="text" id="v_platform_id" placeholder="多个以英文逗号分隔或者以-的形式代表第几个到第几个" class="layui-input">
+                </div>
+            </div>
+    
+            <div class="layui-form-item">
+                <label class="layui-form-label">游戏版本号</label>
+                <div class="layui-input-block">
+                    <input type="text" id="v_version" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" onclick="saveVersion()">提交</button>
+                    <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="platformDetailPopup" class="popup">
+            <table class="layui-hide" id="detail_talbes" lay-filter="detail_talbes"></table>
+        </div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt0") || childMenu.includes("bt1") || childMenu.includes("bt2")  %>');
+        var form, layer , table , indexPopup ,orderField,orderType;
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+
+                //监听Tab切换，以改变地址hash值
+                element.on('tab(tabs)', function(){
+                    if(this.getAttribute('lay-id') != 1){
+                    }
+                });
+
+                table.on('sort(tables)', function(obj){ //注：tables是table原始容器的属性 lay-filter="对应的值"
+                    //尽管我们的 table 自带排序功能，但并没有请求服务端。
+                    //有些时候，你可能需要根据当前排序的字段，重新向服务端发送请求，从而实现服务端排序，如：
+                    orderField = obj.field;
+                    orderType = obj.type;
+                    table.reload('tables', {
+                        initSort: obj, //记录初始排序，如果不设的话，将无法标记表头的排序状态。 layui 2.1.1 新增参数
+                        where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
+                            orderField:orderField, //排序字段   在接口作为参数字段  field order
+                            orderType: orderType //排序方式   在接口作为参数字段  field order
+                        }
+                    });
+                });
+
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+        })
+
+        function initData(){
+            var game_id = $("#s_game_id").val();
+            tableObj = table.render({
+                elem: '#tables',
+                title: '平台列表', //导出数据时的文件名
+                url:'/admin/platformManage/platformManage/list',
+                where:{
+                    orderType:orderType,
+                    orderField:orderField,
+                    platform_id:$("#s_platfrom_id").val(),
+                    platform_name:$("#s_platfrom_name").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'platform_id', title: '平台ID', align:'center',sort: true},
+                    {field:'platform_name', title: '平台名称', align:'center'},
+                    {field:'cooperation_type', title: '合作方式', align:'center',
+                        templet: function(row){
+                            if(row.cooperation_type == 0){
+                                return "信用"
+                            }else{
+                                return "售分"
+                            }
+                        }
+                    },
+                    {field:'rate', title: '分成比例', align:'center',
+                        templet: function(row){
+                            if (typeof(row.rate) === 'number') {
+                                return `${row.rate}%`;
+                            } else {
+                                return '';
+                            }
+                        }},
+                    {field:'money', title: '平台余额', align:'center',
+                        templet: function(row){
+                            console.log(row);
+                            return parseFloat(row.money / 100).toFixed(2)
+                        }
+                    },
+                    {field:'score',title: '上下分总计', sort: true, align:'center', templet: function(row){
+                        return  "<a href='#' style='color:blue;' onclick='getScoreDetail("+row.platform_id+")'>" + (((row.score/100)+(row.lower_score/100)).toFixed(2) || 0.00 ) + "</a>";
+                    }},
+                    {field:'coin_type', title: '币种', align:'center'},
+                    {field:'username_number', title: '会员数量', align:'center',
+                        templet: function(row){
+                            return row.user_accounts.length > 0 ? row.user_accounts[0].username_number : 0;
+                        }
+                    },
+                    {field:'version', title: '游戏版本号', align:'center'},
+                    {field:'status',title: '状态', sort: true, align:'center',
+                        templet: function(row){
+                            if(row.status == 0){
+                                return "已启用"
+                            }else{
+                                return "<span style='color:red'>已关闭</span>"
+                            }
+                        }
+                    },
+                    {field:'createdate',title: '创建时间', sort: true, align:'center'},
+                    {field:'updatedate',title: '修改时间', sort: true, align:'center'},
+                    {field:'cz', title: '操作',align:'center',width:174,
+                        templet: function(row){
+                            let result = '';
+                            result += "<% if( childMenu.includes('bt0') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openPlatfromPopup(1,"+row.platform_id+",0)'>编辑</button> <% } %>";
+                            result += "<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openPlatfromPopup(1,"+row.platform_id+",1)'>上下分</button> <% } %>";
+                            // result += "<% if( childMenu.includes('bt2') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openPlatfromPopup(1,"+row.platform_id+",2)'>下分</button> <% } %>";
+                            return result;
+                        }
+                    },
+                   
+                ]]
+            });
+        }
+        function getScoreDetail(platform_id) {
+            tableObj = table.render({
+                elem: '#detail_talbes',
+                title: '平台上下分明细', //导出数据时的文件名
+                url:'/admin/platformManage/platformManage/detail',
+                where:{
+                    platform_id: platform_id,
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page: true,
+                limit: 10,
+                cols: [[
+                    {field:'order_id', title: '订单号', align:'center',sort: true},
+                    {field:'order_time', title: '时间', align:'center'},
+                    {field:'add_score', title: '上下分金额', align:'center', templet: function(row) {
+                        return row.add_score/100 >= 0?`<span style='color:red'>${(row.add_score/100).toFixed(2)}</span>`:`<span style='color:green'>${(row.add_score/100).toFixed(2)}</span>`;
+                    }},
+                ]]
+            });
+
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //不显示关闭按钮
+                title: '上下分明细',
+                anim: 2,
+                area: ['750px', '650px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#platformDetailPopup")
+            });
+        }
+        function openPlatfromPopup(action,platform_id,layId){
+            if( action == 0 ){
+                indexPopup = layer.open({
+                    type: 1,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 1, //不显示关闭按钮
+                    title: '添加平台',
+                    anim: 2,
+                    cancel: function(index, layero){
+                        closePopup();
+                    },
+                    area: ['750px', '650px'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: $("#platformPopup")
+                });
+            }else if( action == 1 ){
+                $.ajax({
+                    url:"/admin/platformManage/platformManage/get",
+                    type:"POST",
+                    data:{
+                        platform_id:platform_id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        console.log("data:",data);
+                        $(".layui-tab-item").removeClass("layui-show");
+                        $("#cz_elements li").removeClass("layui-this");
+                        $(`.layui-tab-item:eq(${layId})`).addClass("layui-show");
+                        $(`#cz_elements li:eq(${layId})`).addClass("layui-this");
+                        if(data.status == 0){
+                            $("#platform_id").val(data.platform.platform_id);
+                            $("#platform_name").val(data.platform.platform_name);
+                            $("#rate").val(data.platform.rate);
+                            $("#version").val(data.platform.version);
+                            $("#md5_key").val(data.platform.md5_key);
+                            $("#des_key").val(data.platform.des_key);
+                            $("#ofline_back_url").val(data.platform.ofline_back_url);
+                            $("#whiteip").val(data.platform.whiteip);
+                            $("#coin_type").val(data.platform.coin_type || "");
+                            $("#cooperation_type").val(data.platform.cooperation_type);
+                            $("input[value='"+data.platform.status+"']").prop("checked",true);
+                            $("#description").val(data.platform.description);
+                            $("#e_create_date").html(data.platform.createdate);
+                            $("#e_up_date").html(data.platform.updatedate);
+                            form.render();        
+
+                            indexPopup = layer.open({
+                                type: 1,
+                                skin: 'layui-layer-demo', //样式类名
+                                closeBtn: 1, //不显示关闭按钮
+                                title: '操作',
+                                anim: 2,
+                                cancel: function(index, layero){
+                                    closePopup();
+                                },
+                                area: ['750px', '700px'],
+                                shadeClose: false, //开启遮罩关闭
+                                content: $("#czPopup")
+                            });
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                    }
+                })
+            }   
+        }
+
+        function saveAddPlatform(){
+            var platform_id = $("#s_platform_id").val();
+            var platform_name = $("#s_platform_name").val().trim();
+            var version = $("#s_version").val().trim();
+            var md5_key = $("#s_md5_key").val().trim();
+            var des_key = $("#s_des_key").val();
+            var coin_type = $("#s_coin_type").val();
+            var ofline_back_url = $("#s_ofline_back_url").val();
+            var whiteip = $("#s_whiteip").val();
+            var cooperation_type = $("#s_cooperation_type").val();
+            var status =  $("input[name='s_status']:checked").val();
+            var description = $("#s_description").val().trim();
+            var rate = $('#s_rate').val()
+            
+            if( platform_id == "" ){
+                layer.msg('平台ID不能为空！');
+                return;
+            }
+
+            if( platform_name == "" ) {
+                layer.msg('平台不能为空！');
+                return;
+            }
+
+            if( rate < 0 || rate >=100) {
+                layer.msg('分成比例需大于0,小于100')
+                return;
+            }
+            
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/platformManage/platformManage/savePlatform",
+                type:"POST",
+                data:{
+                    action:0,
+                    platform_id:platform_id,
+                    platform_name:platform_name,
+                    rate: rate,
+                    version:version,
+                    coin_type:coin_type,
+                    md5_key:md5_key,
+                    des_key:des_key,
+                    ofline_back_url:ofline_back_url,
+                    whiteip:whiteip,
+                    status:status,
+                    cooperation_type:cooperation_type,
+                    description:description,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function savePlatform(){
+            var platform_id = $("#platform_id").val();
+            var platform_name = $("#platform_name").val().trim();
+            var version = $("#version").val().trim();
+            var rate = $('#rate').val()
+            var md5_key = $("#md5_key").val().trim();
+            var des_key = $("#des_key").val();
+            var ofline_back_url = $("#ofline_back_url").val();
+            var whiteip = $("#whiteip").val();
+            var cooperation_type = $("#cooperation_type").val();
+            var coin_type = $("#coin_type").val();
+            var status =  $("input[name='status']:checked").val();
+            var description = $("#description").val().trim();
+            
+            if( platform_name == "" ){
+                layer.msg('平台不能为空！');
+                return;
+            }
+
+            if (rate < 0 ||rate >=100) {
+                layer.msg('分成比例需大于0,小于100');
+                return;   
+            }
+            
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/platformManage/platformManage/savePlatform",
+                type:"POST",
+                data:{
+                    action:1,
+                    platform_id:platform_id,
+                    platform_name:platform_name,
+                    version:version,
+                    rate: rate,
+                    md5_key:md5_key,
+                    des_key:des_key,
+                    coin_type:coin_type,
+                    ofline_back_url:ofline_back_url,
+                    whiteip:whiteip,
+                    status:status,
+                    cooperation_type:cooperation_type,
+                    description:description,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function saveInOutMoney(action){
+            var platform_id = $("#platform_id").val();
+            var platform_name = $("#platform_name").val();
+            var money = 0;
+            if(action == 0){
+                money = $("#s_money").val();
+                layer.confirm(`是否给平台<b>${platform_name}</b>上<b style="color:red;font-size:16px">${money}</b>分`, {icon: 3,title:'平台上分'}, function(index){
+                    subMoney()
+                    layer.close(index);
+                });
+            } else if (action == 1){
+                money = $("#x_money").val();
+                layer.confirm(`是否给平台<b>${platform_name}</b>下<b style="color:red;font-size:16px">${money}</b>分`, {icon: 3,title:'平台下分'}, function(index){
+                    subMoney()
+                    layer.close(index);
+                });
+            }
+            function subMoney(){
+                if(money == ""){
+                    layer.msg('金额不能为空！');
+                    return;
+                }
+                if(money <= 0){
+                    layer.msg('金额必须大于零！');
+                    return;
+                }
+                if(money >= 1000000000){
+                    layer.msg('金额不能大余十亿！');
+                    return;
+                }
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/platformManage/platformManage/saveInOutMoney",
+                    type:"POST",
+                    data:{
+                        action:action,
+                        platform_id:platform_id,
+                        money:money,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            initData();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#platform_id").val("");
+            $("#platform_name").val("");
+            $("#version").val("");
+            $("#md5_key").val("");
+            $("#des_key").val("");
+            $("#ofline_back_url").val("");
+            $("#whiteip").val("");
+            $("#cooperation_type").val("0");
+            $("input[value='0']").prop("checked",true);
+            $("#description").val("");
+
+            $("#s_platform_name").val("");
+            $("#s_rate").val("");
+
+            $("#s_platform_id").val("");
+            $("#s_version").val("");
+            $("#s_md5_key").val("");
+            $("#s_des_key").val("");
+            $("#s_coin_type").val("人民币");
+            $("#s_ofline_back_url").val("");
+            $("#s_whiteip").val("");
+            $("#s_cooperation_type").val("0");
+            $("#s_description").val("");
+
+            $("#s_money").val("");
+            $("#x_money").val("");
+
+            $("#v_platform_id").val("");
+            $("#v_version").val("");
+            form.render();                                                       
+        }
+         function openVersionPopup(){
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                title: '批量更新版本号',
+                cancel: function(index, layero){
+                        closePopup();
+                    },
+                anim: 2,
+                area: ['550px', '300px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#VersionPopup")
+            });
+        }
+
+        function saveVersion(){
+            var platform_id = $("#v_platform_id").val();
+            var version = $("#v_version").val().trim();
+            var pattern1 = /^[0-9/-]*$/;
+            var pattern2 = /^[0-9/,]*$/;
+            if(!pattern1.test(platform_id)&&!pattern2.test(platform_id)){
+                layer.msg('请输入数字和正确标点！');
+                    return;
+            }
+            if( platform_id == "" ){
+                layer.msg('平台ID不能为空！');
+                return;
+            }
+            if(platform_id.indexOf(',') >=0 && platform_id.indexOf('-')>=0){
+                layer.msg('平台ID输入不正确！');
+                return;
+            }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/platformManage/platformManage/saveVersion",
+                type:"POST",
+                data:{
+                    platform_id:platform_id,
+                    version:version,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        
+        /**
+         * 随机生成指定位数随机码并添加到选定的元素中
+         * @param {*} element 对象数组
+         * @param {*} length 随机码的长度
+         */
+        function RandomStr(element,length){
+            // let key = this.service.tools.generateRandomStr(length);
+            length = length || 32;
+            let $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'; /** **默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
+            let maxPos = $chars.length;
+            let key = '';
+            for (let i = 0; i < length; i++) {
+            key += $chars.charAt(Math.floor(Math.random() * maxPos));
+            }
+            $(`#${element}`).val(key);
+        }
+        //一些tips
+        $("#help_cooperation_type1").mouseover(function () {
+            indexOpen = layer.tips("信用：不需要购买分数，再根据盈利情况结算<br/>售分：先购买分数，用购买的分数为代理或会员上分", '#help_cooperation_type1',{
+                tips:1
+            });
+        })
+
+        $("#help_cooperation_type1").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        $("#help_cooperation_type2").mouseover(function () {
+            indexOpen = layer.tips("信用：不需要购买分数，再根据盈利情况结算<br/>售分：先购买分数，用购买的分数为代理或会员上分", '#help_cooperation_type2',{
+                tips:1
+            });
+        })
+
+        $("#help_cooperation_type2").mouseout(function () {
+            layer.close(indexOpen)
+        })
+
+        $("#help_ofline_back_url1").mouseover(function () {
+            indexOpen = layer.tips("玩家下线时请求的地址", '#help_ofline_back_url1',{
+                tips:1
+            });
+        })
+
+        $("#help_ofline_back_url1").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        
+        $("#help_ofline_back_url2").mouseover(function () {
+            indexOpen = layer.tips("玩家下线时请求的地址", '#help_ofline_back_url2',{
+                tips:1
+            });
+        })
+
+        $("#help_ofline_back_url2").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        
+        $("#help_s_md5_key1").mouseover(function () {
+            indexOpen = layer.tips("后台验证时需要验证的key值", '#help_s_md5_key1',{
+                tips:1
+            });
+        })
+
+        $("#help_s_md5_key1").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        $("#help_s_md5_key2").mouseover(function () {
+            indexOpen = layer.tips("后台验证时需要验证的key值", '#help_s_md5_key2',{
+                tips:1
+            });
+        })
+
+        $("#help_s_md5_key2").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        
+        $("#help_s_des_key1").mouseover(function () {
+            indexOpen = layer.tips("平台验证时需要验证的key值", '#help_s_des_key1',{
+                tips:1
+            });
+        })
+
+        $("#help_s_des_key1").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        $("#help_s_des_key2").mouseover(function () {
+            indexOpen = layer.tips("平台验证时需要验证的key值", '#help_s_des_key2',{
+                tips:1
+            });
+        })
+
+        $("#help_s_des_key2").mouseout(function () {
+            layer.close(indexOpen)
+        })
+        
+    </script>      
+</html>

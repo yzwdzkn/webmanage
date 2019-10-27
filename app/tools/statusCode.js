@@ -1,0 +1,37 @@
+'use strict';
+
+exports.CODE_0 = { code: 0, msg: '操作成功' };
+exports.CODE_10 = { code: 10, msg: '请求错误' };
+exports.CODE_11 = { code: 11, msg: '参数错误' };
+exports.CODE_12 = { code: 12, msg: '操作失败' };
+exports.CODE_13 = { code: 13, msg: '请求不存在' };
+exports.CODE_14 = { code: 14, msg: 'token错误或已过期' };
+exports.CODE_15 = { code: 15, msg: '测试环境功能未开放' };
+exports.CODE_16 = { code: 16, msg: '验证时间戳超时' };
+exports.CODE_17 = { code: 17, msg: 'TOKEN丢失' };
+exports.CODE_18 = { code: 18, msg: '请求异常' };
+
+exports.CODE_501 = { code: 501, msg: '平台不存在' };
+exports.CODE_502 = { code: 502, msg: '验证字段缺失' };
+exports.CODE_503 = { code: 503, msg: '平台验证失败' };
+exports.CODE_504 = { code: 504, msg: '账号已禁用' };
+exports.CODE_505 = { code: 505, msg: '订单号与订单规则不符,订单号长度需高于8位' };
+exports.CODE_506 = { code: 506, msg: '更新的分数小于0' };
+exports.CODE_507 = { code: 507, msg: '平台被禁用' };
+exports.CODE_508 = { code: 508, msg: '上分下分数量大于10000000' };
+exports.CODE_509 = { code: 509, msg: '订单号已经存在' };
+exports.CODE_510 = { code: 510, msg: '服务器更新玩家信息失败' };
+exports.CODE_511 = { code: 511, msg: '服务器更新玩家分数失败' };
+exports.CODE_512 = { code: 512, msg: '获取服务器玩家信息失败' };
+exports.CODE_513 = { code: 513, msg: '登录瞬间不能下分导致失败' };
+exports.CODE_514 = { code: 514, msg: '余额不足导致下分失败' };
+exports.CODE_515 = { code: 515, msg: '登录带分和上下分并发操作导致失败' };
+exports.CODE_516 = { code: 516, msg: '有相同的订单正在处理中' };
+exports.CODE_517 = { code: 517, msg: '查询时间范围不在同一天' };
+exports.CODE_518 = { code: 518, msg: '平台分数不足' };
+exports.CODE_519 = { code: 519, msg: '开始时间小于结束时间' };
+exports.CODE_520 = { code: 520, msg: '用户账号不能为空' };
+exports.CODE_521 = { code: 521, msg: '非法数值' };
+exports.CODE_522 = { code: 522, msg: '订单号不存在' };
+exports.CODE_523 = { code: 523, msg: '订单号的状态还未处理完成' };
+exports.CODE_524 = { code: 524, msg: '该账号不存在' };

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+    <div class="layui-card ">
+        <div class="card-header">
+            <div class="layui-form">
+                <span class="spanTitle"><%=title%></span>
+                <div class="layui-input-inline" style="margin-bottom:15px;margin-left: 20px;">
+                    <input type="checkbox" lay-skin="switch" lay-filter="isRealtime" lay-text="开启|关闭" value="1" checked>
+                </div>
+                <div class="layui-input-inline" style="margin-bottom:5px;margin-left: 5px;">
+                        <span style="display:inline-block;color: #999!important">实时总数据</span>
+                </div>
+            </div>
+            <br/>
+ 
+            <div class="layui-form" style="text-align: right"> 
+                <div class="layui-row">   
+                    <div class="layui-inline" style="text-align: left">
+                        <div class="layui-inline" >
+                            <select id="s_agent_id" lay-filter="s_agent_id">
+                                <% if(admin.account_type == 'Admin'){ %>
+                                    <option value="0" selected="">请选择...</option>
+                                    <% agents.forEach(function(item){%>
+                                        <option value="<%=item.id %>" ><%=item.username %></option>   
+                                    <% }) %>
+                                <% }else{ %>
+                                    <% agents.forEach(function(item){%>
+                                        <% if(admin.account_type == 'Agent' && admin.id == item.id ){ %>
+                                            <option value="<%=item.id %>" selected=""><%=item.username %></option> 
+                                        <% } %>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="layui-inline">
+                            <input type="text" id="s_username" class="layui-input" placeholder="玩家账号">
+                        </div>
+
+                        <div class="layui-inline" >
+                            <select id="s_game_id" lay-filter="s_game_id">
+                                <option value="0" selected="">游戏名称</option>
+                                <% gameData.forEach(function(item){%>
+                                    <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+
+                        <div class="layui-inline" >
+                            <select id="s_room_id" >
+                                <option value="0" selected="">所有房间</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="layui-input-inline" style="width: 160px;">
+                        <input type="text" id="s_start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                    </div>
+                    <div class="layui-input-inline" >
+                        <span>-</span>
+                    </div>
+                   
+                    <div class="layui-input-inline" style="width: 160px;">
+                        <input type="text" id="s_end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                    </div>
+                    
+ 
+                    <div class="layui-input-inline btm_width_140">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                            <button type="button" class="layui-btn" id="clear">重置</button>
+                            <button type="button" class="layui-btn" id="export">导出</button>
+                    </div>
+                </div>
+            </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+<div class="popup" id="detailLogInit">
+    <!-- <div style="float: right;">       
+        <div class="layui-form">
+            <div class="layui-inline">
+                <div class="layui-input-inline"  style=" width: 150px;">
+                    <input type="text" id="s_game_no" class="layui-input" placeholder="牌局编号">
+                </div>
+            </div>
+
+            <div class="layui-input-inline" style="width: 160px;">
+                <input type="text" id="s_start_time" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-input-inline" >
+                <span>-</span>
+            </div>
+               
+            <div class="layui-input-inline" style="width: 160px;">
+                <input type="text" id="s_end_time" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+            </div>
+
+            <div class="layui-input-inline btm_width_70">
+                <button type="button" class="layui-btn" id="detail_search">搜索</button>
+            </div>
+
+            <div class="layui-input-inline btm_width_70">
+                <button type="button" class="layui-btn" onclick="detailExport()" >导出</button>
+            </div>
+        </div>
+    </div> -->
+    <br>
+    <br>
+    <div class="layui-card-body">
+        <table class="layui-hide" id="detail_tables" lay-filter="detail_tables"></table>
+    </div>
+    
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ,tableObj,exportData,is_realtime =1 ;
+        $(function(){
+            layui.use(['form','layer','laydate','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                laydate.render({
+                    elem: '#s_start_date',
+                    format: 'yyyy-MM-dd',
+                    value: new Date()
+                });
+                laydate.render({
+                    elem: '#s_end_date',
+                    format: 'yyyy-MM-dd',
+                    value: new Date()
+                });
+                form.on('switch(isRealtime)', function(data){
+                    is_realtime = this.checked ? 1 : 0;
+                });
+                form.on('select(s_game_id)', function(data){   
+                    var game_id = data.value;
+                    console.log("game_id:",game_id);
+                    $.ajax({
+                        url:"/admin/dataManage/userLostwinStatistics/findRoom",
+                        type:"POST",
+                        data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                        timeout:60000, //1分钟
+                        success:function(data){
+                            if(data.rooms.length > 0){
+                                $("#s_room_id").empty().append('<option value="'+data.rooms[0].room_id+'" selected="">'+data.rooms[0].room_name+'</option>');
+                            }else{
+                                $("#s_room_id").empty().append('<option value="0" selected="">所有房间</option>');
+                            }
+                            for (var i = 1; i < data.rooms.length; i++) {
+                                $("#s_room_id").append('<option value="'+data.rooms[i].room_id+'">'+data.rooms[i].room_name+'</option>');
+                            }
+                            form.render('select'); 
+                        },
+                        error: function(xhr, status, error){
+                            console.log("[ERROR] - ",error);
+                        }
+                    })
+                });
+
+                initData(); 
+            });
+
+            $("#search").click(function(){
+              initData(); 
+                // reloadTable();
+            })
+            $("#export").click(function(){
+                table.exportFile(tableObj.config.id,exportData, 'xls');
+            })
+
+        })
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '玩家输赢详情', //导出数据时的文件名
+                url:'/admin/dataManage/userLostwinStatistics/list',
+                where:{
+                    is_realtime:is_realtime,
+                    agent_id:$("#s_agent_id").val(),
+                    game_id:$("#s_game_id").val(),
+                    room_id:$("#s_room_id").val(),
+                    agent_id:$("#s_agent_id").val(),
+                    start_date:$("#s_start_date").val(),
+                    end_date:$("#s_end_date").val(),
+                    username:$("#s_username").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'id', title: '玩家ID', align:'center',sort: true},
+                    {field:'username', title: '玩家账号', align:'center',sort: true},
+                    {field:'agent_id', title: '代理账号', width:100, align:'center',sort: true,
+                        templet: function(row){
+                            return row.agent_account !=null  ? row.agent_account.username : "未知";
+                        }
+                    },
+                    {field:'lost_win', title: '玩家输赢',align:'center',sort: true,
+                        templet: function(row){
+                            return row.PlayerData !=null ? parseFloat((row.PlayerData.win_gold - row.PlayerData.lost_gold) /100).toFixed(2) : "0";
+                        }
+                    },
+                    {field:'isOnline', title: '在线状态',width:100,align:'center',sort: true,
+                        templet: function(row){
+                            if(row.isOnline){
+                                return "<span style='color:green'>在线</span>"
+                            }else{
+                                return "<span>离线</span>"
+                            }
+                        }
+                    },
+                    {field:'lastlogintime', title: '最后登录时间',width:160,align:'center',sort: true,
+                        templet: function(row){
+                            return row.lastlogintime ? row.lastlogintime : '0';
+                        }
+                    },
+                    {field:'', title: '操作',align:'center',
+                        templet: function(row){
+                          return"<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='detailLog(\""+row.username+"\")'>详情</button>";
+                            
+                        }
+                    }
+                ]],
+                done: function (res, curr, count) {
+                    exportData=res.data;
+                }
+            });
+            currentData = null;
+            //监听行单击事件（单击事件为：rowDouble）
+            table.on('row(tables)', function(obj){
+                var data = obj.data;
+                
+                currentData = data;
+                //标注选中样式
+                obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+            });
+        }
+        
+        function detailLog(username) {
+            $("#detail_log_username").val(username)
+            var table =layer.open({
+                type: 1,
+                shade: false,
+                maxmin: true,
+                content: $("#detailLogInit"),
+                title: '详情日志',
+                area: ['100%', '100%'],
+            });
+            detailLogInit(username);
+        }
+
+        function detailLogInit(username) {
+            table.render({
+                elem: '#detail_tables',
+                title: '对局日志详情', 
+                url:'/admin/dataManage/userLostwinStatistics/detailLog',
+                where:{
+                    username: username,
+                    game_no:"",
+                    start_time:$('#s_start_date').val(),
+                    end_time:$('#s_end_date').val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                limit:10,
+                cols: [[
+                    {field:'create_time', title: '日期', align:'center',sort: true},
+                    {field:'game_no', title: '牌局编号', align:'center',sort: true},
+                    {field:'game_name', title: '游戏名称', align:'center',sort: true},
+                    {field:'name_list', title: '参与id', width:80, align:'center'},
+                    {field:'valid_bet', title: '投注',align:'center',sort: true, templet: function(row){
+                        return (row.valid_bet/100).toFixed(2)
+                    }},
+                    {field:'profit', title: '输赢',align:'center',sort: true,templet: function(row){
+                        return (row.profit/100).toFixed(2)
+                    }},
+                ]]
+            });   
+        }
+
+
+
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+              agent_id:$("#s_agent_id").val(),
+              game_id:$("#s_game_id").val(),
+              room_id:$("#s_room_id").val(),
+              agent_id:$("#s_agent_id").val(),
+              start_date:$("#s_start_date").val(),
+              end_date:$("#s_end_date").val(),
+              username:$("#s_username").val(),
+              _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+        $("#clear").click(function() {
+            $("#s_agent_id").val('0')
+            $("#s_username").val("")
+            $("#s_game_id").val('0')
+            $("#s_room_id").val("0")
+            form.render()
+        })
+        
+    </script>      
+</html>

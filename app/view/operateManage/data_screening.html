@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+
+</head>
+<body>
+    
+    <div class="layui-card">
+        <div class="layui-card-header" style="padding-bottom:10px;">
+            <span class="spanTitle"><%=title%></span>
+
+            <i class="ti-help-alt" id='help'>
+                <!-- <div id='help-content' class="cities" style="display: none">
+                    <div>
+                        <div>asfdsd</div>
+                        <div>asfdsd</div>
+                        <div>asfdsd</div>
+                        <div>asfdsd</div>
+                        <div>asfdsd</div>
+                    </div>
+                </div> -->
+            </i>
+            <!-- <span><img src="/public/admin/img/women.jpg" height="30" width="30" alt=""></span> -->
+            <!-- <span  title="test"><i class="ti-help-alt"></i><span></span> -->
+            <div class="layui-input-inline" style="margin-left: 15px; margin-bottom: 10px; width: 160px;">
+            </div>
+            <div style="float: right;">
+                <div class="layui-form">
+                    <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                        <input type="text" id="start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                    </div>
+                    <div class="layui-input-inline" >
+                        <span>-</span>
+                    </div>
+                    <div class="layui-input-inline" style=" width: 180px;margin-left: 5px;">
+                        <input type="text" id="end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                    </div>
+                    <div class="layui-input-inline btm_width_70" >
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                    </div>
+                </div>
+            </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-tab layui-tab-brief" lay-filter="tabs">
+                <ul class="layui-tab-title">
+                    <li class="layui-this" lay-id="1" id="toDay">今日</li>
+                    <li lay-id="2" id="toWeek">昨日</li>
+                    <li lay-id="3" id="toMonth">本周</li>
+                    <li lay-id="4" id="toMonth">上周</li>
+                    <li lay-id="5" id="toMonth">本月</li>
+                    <li lay-id="6" id="toMonth">上月</li>
+                </ul>
+                <div class="layui-tab-content">
+                    <div class="layui-row realTimeDatas">
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">新增登录</span>
+                            <span class="dataValue" id="register_count">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">活跃玩家</span>
+                            <span class="dataValue" id="login_count">0</span>
+                        </div>
+                        
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">当前在线</span>
+                            <span class="dataValue" id="user_online">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">存款金额</span>
+                            <span class="dataValue" id="deposit">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">存款人数</span>
+                            <span class="dataValue" id="deposit_user_count">0</span>
+                        </div>
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">存款率</span>
+                            <span class="dataValue" id="deposit_rate">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">取款金额</span>
+                            <span class="dataValue" id="withdrawal">0</span>
+                        </div>
+                        
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">取款人数</span>
+                            <span class="dataValue" id="withdrawal_user_count">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">当前杀数</span>
+                            <span class="dataValue" id="current_kill_count">0</span>
+                        </div>
+                        
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">投注金额</span>
+                            <span class="dataValue" id="valid_bet">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">投注人数</span>
+                            <span class="dataValue" id="bet_number">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">投注率</span>
+                            <span class="dataValue" id="bet_rate">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">平台余额</span>
+                            <span class="dataValue" id="platform_balance">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">会员输赢</span>
+                            <span class="dataValue" id="lost_win">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">人均输赢</span>
+                            <span class="dataValue" id="lost_win_avg">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">抽水金额</span>
+                            <span class="dataValue" id="deduct_gold">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">提款手续费</span>
+                            <span class="dataValue" id="service_fee">0</span>
+                        </div>
+                        
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">返佣金额</span>
+                            <span class="dataValue" id="return_commission">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4">
+                            <span class="dataKey">保险箱金额</span>
+                            <span class="dataValue" id="safe_box">0</span>
+                        </div>
+
+                        <div class="layui-col-xs12 layui-col-sm6 layui-col-md4" id='is_show'>
+                            <span class="dataKey">次日留存</span>
+                            <span class="dataValue" id="remain_rate">0</span>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>  
+        </div>
+    </div>
+    
+
+    <div id='tips-content' style="display: none">
+        <div style="width: 500px" class='tips-content'>
+            <div><b>新增登录</b>: 首次登陆游戏的新用户</div> 
+            <div><b>活跃玩家</b>: 当天老用户登录游戏和新增用户</div> 
+            <div><b>存款金额</b>: 重置成功金额</div> 
+            <div><b>存款率</b>: 存款人数/活跃玩家</div> 
+            <div><b>投注金额</b>: 所有游戏投注的总额，比如计算牛牛输赢后的倍数、不计算骰宝输赢的倍数</div>
+            <div><b>投注率</b>: 投注人数/活跃玩家</div>
+            <div><b>平台余额</b>: 目前平台会员剩余未提款金额（只显示当前时间的金额、不随时间的变动而变化）</div> 
+            <div><b>会员输赢</b>: 会员在平台整体输赢情况（负数表示平台盈利）</div> 
+            <div><b>人均输赢</b>: 会员输赢/投注人数（负数表示平台盈利）</div> 
+            <div><b>抽水金额</b>: 系统抽水总金额 </div> 
+            <div><b>提款手续费</b>: 会员提现所付的全部手续费</div> 
+            <div><b>返佣金额</b>: 全民代所有人的返佣金额总和</div> 
+            <div><b>保险箱金额</b>: 所有玩家保险箱内的金额</div>
+            <div><b>次日留存率</b>: 前天新增用户在昨天再次登录游戏的比例</div> 
+        </div>
+    </div>
+
+</body>
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var layer ,currentLayId = 1,subtips;
+        var tipsContent = $("#tips-content").html()
+        console.log("tipsContent: ", tipsContent)
+        $(function(){
+            layui.use(['element','layer','laydate'], function(){
+                var element = layui.element;
+                var laydate = layui.laydate;
+                layer = layui.layer;
+                var value = Date.now() - 86400000;
+                //日期
+                laydate.render({
+                    elem: '#start_date',
+                    type: 'date'
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    type: 'date'
+                });
+                element.on('tab(tabs)', function(){
+                    currentLayId = this.getAttribute('lay-id');
+                    if (currentLayId !=1 && currentLayId !=2) {
+                        $("#is_show").attr('style','display:none')
+                    } else {
+                        $("#is_show").attr('style','display:block')
+                    }
+                    initData(currentLayId);
+                });
+                initData(currentLayId);
+            });
+
+            $("#search").click(function(){
+                initData(0);
+            })
+        })
+
+        $("#help").mouseover(function() {
+            openMsg()
+            // $("#help-content").attr('style','display: block')
+        })
+
+        $("#help").mouseout(function(){
+            layer.close(subtips);
+            // $("#help-content").attr('style','display: none')
+        })
+
+        
+        function openMsg() {
+            subtips = layer.tips(tipsContent, '#help',{tips:[1,'#2894FF'],time: 30000,area: ['auto', 'auto']},);
+        }
+
+
+
+
+        function initData(type){
+
+            // var date = $("#date").val();
+            var start_date = "";
+            var end_date = "";
+            console.log("type:",type);
+            switch(parseInt(type)){
+                case 0:
+                    start_date = new Date($("#date").val()).getTime();
+                    end_date = new Date($("#date").val()).getTime();
+                    break;
+                case 1:
+                    var date = new Date();
+                    start_date = new Date(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " 00:00:00").getTime(); // 今日开始时间时间戳
+                    end_date =  Date.now();
+                    break;
+                case 2:
+                    var date = new Date(Date.now() - 86400 * 1000);
+                    start_date = new Date(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " 00:00:00").getTime(); // 减去一天的时间
+                    end_date = new Date(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " 23:59:59").getTime();
+                    break;
+                case 3:
+                    start_date = showWeekFirstDay(Date.now()); // 获取本周第一天
+                    end_date = Date.now();
+                    break;
+                case 4:
+                    var cur_week = showWeekFirstDay(Date.now());
+                    start_date = new Date(getTime(7)).getTime(); // 上周第一天
+                    end_date = new Date(getTime(1)).getTime(); // 上周第最后一天
+                    break;
+                case 5:
+                    start_date = showMonthFirstDay(Date.now());// 获取本月第一天
+                    end_date = Date.now();
+                    break;
+                case 6:
+                    var cur_month = showWeekFirstDay(Date.now());
+                    var dates = showPreMonthLastDay();
+                    start_date = new Date(dates.startDate).getTime();// 获取上月第一天
+                    end_date = new Date(dates.endDate).getTime();// 获取上月最后一天
+                    break;
+                default:
+                    start_date = new Date(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDay() + " 00:00:00").getTime();
+                    end_date = start_date;
+                    break;
+            }
+            console.log("start_date:",start_date);
+            console.log("end_date:",end_date);
+            //loading层
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/dataScreening/initData",
+                type:"get",
+                data:{
+                    type:type,
+                    start_date:start_date,
+                    end_date:end_date,
+                    _csrf:$("#_csrf").val()
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    console.log("data:",data);
+                    $("#register_count").text(data.data.register_count); //新增登录
+                    $("#login_count").text(data.data.login_count); //活跃玩家
+                    $("#user_online").text(data.data.user_online); //当前在线
+
+                    $("#deposit").text(data.data.deposit/100); // 存款金额 
+                    $("#deposit_user_count").text(data.data.deposit_user_count); // 存款人数 
+                    $("#deposit_rate").text(data.data.deposit_rate + '%'); // 存款率 
+
+                    $("#withdrawal").text(data.data.withdrawal/100); // 取款金额 
+                    $("#withdrawal_user_count").text(data.data.withdrawal_user_count); // 取款人数 
+                    $("#current_kill_count").text(data.data.current_kill_count + '%'); //
+
+                    
+                    $("#valid_bet").text(parseFloat(data.data.valid_bet / 100).toFixed(2)); // 投注金额
+                    $("#bet_number").text(data.data.bet_number); // 投注人数
+                    $("#bet_rate").text(data.data.login_count > 0 ? parseFloat( (data.data.bet_number / data.data.login_count) * 100 ).toFixed(2) +"%"  : "0.00%"); //投注率
+
+                    $("#platform_balance").text(data.data.platform_user_money / 100); // 平台余额
+                    $("#lost_win").text(parseFloat( (data.data.win_gold - data.data.lost_gold) / 100 ).toFixed(2)); // 会员输赢
+                    $("#lost_win_avg").text(data.data.lost_win_avg); // 人均输赢
+
+                    $("#deduct_gold").text(parseFloat( data.data.deduct_gold / 100) .toFixed(2)); // 抽水金额
+                    $("#service_fee").text(data.data.service_fee/100); //手续费
+                    $("#return_commission").text(data.data.return_commission/100); // 返佣金额
+
+                    $("#safe_box").text(data.data.safe_box_balance/100); // 保险箱金额
+                    $("#remain_rate").text(data.data.remain_rate+"%"); // 次日留存
+                    
+                    // $("#bet_number").text(data.data.bet_number);
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                },
+
+            })
+        }
+
+        // 本周第一天
+        function showWeekFirstDay(date)     
+        {     
+            var Nowdate=new Date(date);     
+            var WeekFirstDay=new Date(Nowdate-(Nowdate.getDay()-1)*86400000);     
+            M=Number(WeekFirstDay.getMonth())+1;
+            return new Date(WeekFirstDay.getFullYear() + "-" + M + "-" + WeekFirstDay.getDate() + " 00:00:00").getTime();     
+        }
+
+        // 本周最后天
+        function showWeekLastDay(date)     
+        {     
+            var Nowdate=new Date(date);     
+            var WeekFirstDay=new Date(Nowdate-(Nowdate.getDay()-1)*86400000);     
+            var WeekLastDay=new Date((WeekFirstDay/1000+6*86400)*1000);     
+            M=Number(WeekLastDay.getMonth())+1;
+            return new Date(WeekLastDay.getFullYear()+"-"+M+"-"+WeekLastDay.getDate() + " 23:59:59").getTime();     
+        }
+
+
+
+        // 本月第一天
+        function showMonthFirstDay(date)     
+        {     
+            var Nowdate=new Date(date);     
+            var MonthFirstDay=new Date(Nowdate.getFullYear(),Nowdate.getMonth(),1);     
+            M=Number(MonthFirstDay.getMonth())+1;
+            return new Date(MonthFirstDay.getFullYear()+"-"+M+"-"+MonthFirstDay.getDate() + " 00:00:00").getTime();     
+        }
+       
+        // 本月最后一天
+        function showMonthLastDay(date)     
+        {     
+            var Nowdate=new Date(date);     
+            var MonthNextFirstDay=new Date(Nowdate.getFullYear(),Nowdate.getMonth()+1,1);     
+            var MonthLastDay=new Date(MonthNextFirstDay-86400000);     
+            M=Number(MonthLastDay.getMonth())+1;
+            return new Date(MonthLastDay.getFullYear()+"-"+M+"-"+MonthLastDay.getDate() + " 23:59:59").getTime();     
+        }
+
+        // 获取上月第一天和最后一天
+        function showPreMonthLastDay(){
+            var nowdays = new Date();
+            var year = nowdays.getFullYear();
+            var month = nowdays.getMonth();
+            if(month==0){
+                month = 12;
+                year = year-1;
+ 
+            }
+            if(month<10){
+                month = '0'+month;
+            }
+            var myDate = new Date(year,month,0);
+            var startDate = year+'-'+month+'-01 00:00:00'; //上个月第一天
+            var endDate = year+'-'+month+'-'+myDate.getDate()+' 23:59:00';//上个月最后一天
+            return { startDate , endDate }
+        }
+
+        //获取上周起始时间结束时间、下周起始时间结束时间开始时间和本周起始时间结束时间;（西方）
+        function getTime(n) {
+            var now = new Date();
+            var year = now.getFullYear();
+            //因为月份是从0开始的,所以获取这个月的月份数要加1才行
+            var month = now.getMonth() + 1;
+            var date = now.getDate();
+            var day = now.getDay();
+            //判断是否为周日,如果不是的话,就让今天的day-1(例如星期二就是2-1)
+            if (day !== 0) {
+                n = n + (day - 1);
+            } else {
+                n = n + day;
+            }
+            if (day) {
+                //这个判断是为了解决跨年的问题
+                if (month > 1) {
+                    month = month;
+                }
+                //这个判断是为了解决跨年的问题,月份是从0开始的
+                else {
+                    year = year - 1;
+                    month = 12;
+                }
+            }
+            now.setDate(now.getDate() - n);
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            date = now.getDate();
+            var s = year + "-" + (month < 10 ? ('0' + month) : month) + "-" + (date < 10 ? ('0' + date) : date);
+            return s;
+        }
+
+    </script>      
+</html>

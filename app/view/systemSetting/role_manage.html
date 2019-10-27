@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/static/zTreeV3/css/metroStyle/metroStyle.css">
+    
+</head>
+<body>
+    
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <div class="layui-form" style="text-align: right">
+                    <div class="layui-row">
+                        <div class="layui-col-md1" style="text-align: left">
+                            <div class="layui-input-inline btm_width_100">
+                                <% if( childMenu.includes('bt1') ){ %>
+                                    <button type="button" class="layui-btn" onclick="openRolePopup(0)">添加角色</button>
+                                <% } %>
+                            </div>
+                        </div>
+                <!-- <div class="layui-col-md11">
+                        <div class="layui-inline" >
+                            <div class="layui-input-block"style=" width: 150px;margin-left: 5px; text-align:left">
+                                <select id="s_status" lay-filter="s_status">
+                                <option value="-1">状态</option>
+                                <option value="0">已启用</option>
+                                <option value="1">未启用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                <input type="text" id="s_name"  placeholder="角色名称" class="layui-input">
+                          </div>
+                    <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+
+</body>
+
+<div id="rolePopup" class="popup">
+    <div class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色名称</label>
+            <div class="layui-input-block">
+                <input type="hidden" id="action" class="layui-input">
+                <input type="hidden" id="id" class="layui-input">
+                <input type="text" id="name" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色状态</label>
+            <div class="layui-input-block" id="status">
+                <input type="radio" name="status" value="0" title="开启" checked>
+                <input type="radio" name="status" value="1" title="关闭">
+            </div>
+        </div>
+        <% if(admin.is_super == 1){ %>
+            <div class="layui-form-item">
+                <label class="layui-form-label">角色类型</label>
+                <div class="layui-input-block" id="type">
+                    <input type="radio" name="type" value="0" title="系统角色" checked>
+                    <input type="hidden" name="type" value="1" title="平台角色">
+                </div>
+            </div>
+        <% } else { %>
+            <input type="hidden" name="type" value="1" checked >
+        <% } %>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色描述</label>
+            <div class="layui-input-block">
+                <textarea id="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveRole()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="authorizationPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="role_id">
+        <ul id="treeData" class="ztree"></ul>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveAuthorization()">提交</button>
+                <button class="layui-btn" onclick="closeAuthorizationPopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<script src="/public/admin/static/zTreeV3/js/jquery.ztree.core.min.js"></script>
+<script src="/public/admin/static/zTreeV3/js/jquery.ztree.excheck.min.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%=childMenu.includes("bt1")%>');
+        var form, layer , table , indexPopup ;
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+
+        function initData(){
+            var game_id = $("#s_game_id").val();
+
+            tableObj = table.render({
+                elem: '#tables',
+                title: '权限管理', //导出数据时的文件名
+                url:'/admin/systemSetting/roleManage/list',
+                where:{
+                    // name:$("#s_name").val(),
+                    // type:$("#s_type").val(),
+                    // status:$("#s_status").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                limit:10,
+                cols: [[
+                    {field:'id', title: '编号', align:'center',sort: true},
+                    {field:'name', title: '角色名称', align:'center'},
+                    {field:'list', title: '用户列表', align:'center', templet: function(row) {
+                        return row.list.join()
+                    }},
+                    // {field:'status',title: '状态', sort: true, align:'center',
+                    //     templet: function(row){
+                    //         if(row.status == 0){
+                    //             return "已启用"
+                    //         }else{
+                    //             return "<span style='color:red'>已关闭</span>"
+                    //         }
+                    //     }
+                    // },
+                    {field:'description',title: '角色描述', sort: true, align:'center'},
+                    {field:'cz', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            var cz = "";
+                            cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openRolePopup(1,"+row.id+")'>编辑 </button> <% } %>";
+                            cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='showAuthorizationTree("+row.id+")'>权限设置</button> <% } %>";
+                            cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='deleteRole("+row.id+",\""+row.name+"\")'>删除 </button> <% } %>";
+                            return cz;
+                        }
+                    }
+                ]]
+            });
+        }
+      
+        function openRolePopup(action,id){
+            $("#action").val(action);
+            if( action == 0 ){
+                indexPopup = layer.open({
+                    type: 1,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 1, //显示关闭按钮1
+                    cancel: function(index, layero){
+                        closePopup();
+                    },
+                    title: '添加角色',
+                    anim: 2,
+                    area: ['500px', '420px'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: $("#rolePopup")
+                });
+            }else if( action == 1 ){
+
+                $.ajax({
+                    url:"/admin/systemSetting/roleManage/get",
+                    type:"POST",
+                    data:{
+                        id:id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        console.log("data:",data);
+                        if(data.status == 0){
+                            $("#id").val(data.role.id);
+                            $("#name").val(data.role.name);
+                            $("#status input[value='"+data.role.status+"']").prop("checked",true);
+                            $("#type input[value='"+data.role.type+"']").prop("checked",true);
+                            $("#description").val(data.role.description);
+                            form.render('radio');
+                            indexPopup = layer.open({
+                                type: 1,
+                                skin: 'layui-layer-demo', //样式类名
+                                closeBtn: 1, //显示关闭按钮1
+                                cancel: function(index, layero){
+                                    closePopup();
+                                },
+                                title: '编辑角色',
+                                anim: 2,
+                                area: ['500px', '420px'],
+                                shadeClose: false, //开启遮罩关闭
+                                content: $("#rolePopup")
+                            });
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+                
+            }
+            
+        }
+
+        function saveRole(){
+            var action = $("#action").val();
+            var id = $("#id").val();
+            var name = $("#name").val().trim();
+            var status =  $("input[name='status']:checked").val();
+            var type =  $("input[name='type']:checked").val();
+            var description = $("#description").val();
+            if(!vilidParamLength(name,20,"角色名称长度不超过20")||!vilidParamLength(description,100,"描述长度不超过100")) return;
+            if(name == ''){
+                layer.msg('角色名称不能为空!');
+                return;
+            }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/systemSetting/roleManage/saveRole",
+                type:"POST",
+                data:{
+                    action:action,
+                    id:id,
+                    name:name,
+                    status:status,
+                    type:type,
+                    description:description,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function deleteRole(id,name){
+            layer.confirm("是否确认删除<span style='color:red'> "+name+" </span>这条角色？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/systemSetting/roleManage/deleteRole",
+                    type:"POST",
+                    data:{id:id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            initData();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#action").val("");
+            $("#id").val("");
+            $("#name").val("");
+            $("#status input[value='0']").prop("checked",true);
+            $("#type input[value='0']").prop("checked",true);
+            $("#description").val("");
+            form.render('radio');
+        }
+
+        function closeAuthorizationPopup(){
+            layer.close(indexPopup);
+            initTree([]);
+        }
+
+        function showAuthorizationTree(id){
+           
+            $.ajax({
+                url:"/admin/systemSetting/roleManage/authorizationMenu",
+                type:"POST",
+                data:{id:id,_csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        $("#role_id").val(id);
+                        initTree(data.tree);
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '添加授权',
+                            anim: 2,
+                            area: ['500px', '90%'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#authorizationPopup")
+                        });
+                        
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+            
+        }
+
+        function saveAuthorization(){
+            var treeObj = $.fn.zTree.getZTreeObj("treeData");
+            var nodes = treeObj.getCheckedNodes(true);
+            var ids = [];
+            for (var i = 0; i < nodes.length; i++) {
+                if(nodes[i].id != 0){
+                    ids.push(nodes[i].id);
+                }
+            }
+            ids = ids.sort(function(a,b){return a - b}); //数组排序
+            $.ajax({
+                url:"/admin/systemSetting/roleManage/saveAuthorizationMenu",
+                type:"POST",
+                data:{id:$("#role_id").val(),menuIds:ids.join(","),_csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        closeAuthorizationPopup();
+                        
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function initTree(tree){
+            $.fn.zTree.init($("#treeData"), {
+                check: {
+                    enable: true,
+                    chkStyle: 'checkbox'
+                },
+                data: {
+                    // simpleData: {
+                    //     enable: true
+                    // }
+                },
+                callback:{
+                    onCheck:function(e,treeId, treeNode){
+                        if(treeId == "treeData") {
+                            var zTreeObj = $.fn.zTree.getZTreeObj(treeId);
+                            optParOrSon(treeId, treeNode,zTreeObj);
+                        }
+                    }
+                }
+
+            }, tree);
+        }
+
+        function optParOrSon(treeId,treeNode,zTreeObj){
+            if(treeNode.checked){
+                //全部后代节点的选中
+                var childNodes = getChildsByTreeNode(treeNode);
+                for(var i in childNodes){
+                    zTreeObj.checkNode(childNodes[i], true, true);
+                }
+                
+            }else{
+                // //同时全部祖先节点也不能被选中
+                if(treeNode.getParentNode() ){
+                    var parentNode = treeNode.getParentNode();
+                    var flag = true;
+                    var zCN = parentNode.children;
+                    // 判断兄弟节点是否有被选中的
+                    for (var i = 0; i < zCN.length; i++) {
+                        if(zCN[i].checked == true){ 
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if(flag){ // 当所有兄弟节点都没被选中时，父节点让他选中
+                        zTreeObj.checkNode(parentNode, true, true); // 选中父节点
+                        var childNodes = getChildsByTreeNode(parentNode);
+                        for(var i in childNodes){ // 取消选中子节点
+                            zTreeObj.checkNode(childNodes[i], false, false);
+                        }
+                    }else{
+                        zTreeObj.checkNode(treeNode, false, false);
+                    }
+                }
+            }
+        };
+
+        //获取所有子节点
+        function getChildsByTreeNode(treeNode,childsArr){
+            var childsArr = childsArr || [];
+            if (treeNode.isParent) {//是父节点则获取所有子节点
+                var childs = treeNode.children;
+                for(var i in childs){
+                    childsArr.push(childs[i]);
+                    getChildsByTreeNode(childs[i],childsArr);
+                }
+            }
+            return childsArr;
+        };
+         
+        //获取所有父节点
+        function getParsByTreeNode(treeNode,parsArr){
+            var parsArr = parsArr || [];
+            var parNode = treeNode.getParentNode();
+            if(parNode){
+                parsArr.push(parNode);
+                getParsByTreeNode(parNode,parsArr);
+            }
+            return parsArr;
+        }
+
+    </script>      
+</html>

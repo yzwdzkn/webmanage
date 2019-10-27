@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-form">
+                <div class="layui-row">
+                    <div class="layui-col-md12" style="text-align: right">
+                    <div class="layui-input-inline" style="width: 250px;margin-left: 5px;text-align: left">
+                        <select id="s_platform_id" lay-filter="s_platform_id">
+                            <option value="0" selected="">所有平台</option>
+                            <% platformInfos.forEach(function(item){%>
+                                <option value="<%=item.platform_id %>" ><%=item.platform_id %> -- <%= item.platform_name %></option> 
+                            <% }) %>
+                        </select>
+                    </div>
+                    
+                    <div class="layui-inline">
+                        <div class="layui-input-inline"  style=" width: 150px;">
+                            <input type="text" id="username" class="layui-input" placeholder="会员账号">
+                        </div>
+                        <!-- <div class="layui-input-inline"  style=" width: 150px;">
+                            <input type="text" id="e_platform_id" class="layui-input" placeholder="平台ID">
+                        </div>
+                        <div class="layui-input-inline"  style=" width: 150px;">
+                            <input type="text" id="e_platform_name" class="layui-input" placeholder="平台名称">
+                        </div> -->
+                    </div>
+ 
+                    <div class="layui-input-inline btm_width_140">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                            <button type="button" class="layui-btn" id="export">导出</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+<div id="killPopup" class="popup">
+    <div class="layui-form" action="">
+        <input type="hidden" id="s_user_id" class="layui-input">
+        <input type="hidden" id="s_username" class="layui-input">
+        <div class="layui-form-item">
+            <label class="layui-form-label">追杀状态</label>
+            <div class="layui-input-block">
+                <select id="kill_status" lay-filter="kill_status">
+                    <option value="1" selected="">开始追杀</option>
+                    <option value="0">取消追杀</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">追杀金额</label>
+            <div class="layui-input-block">
+                <input type="number" id="kill_money" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">追杀原因</label>
+            <div class="layui-input-block">
+                
+                <input type="text" id="kill_remark" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveKill()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup ,tableObj ;
+        $(function(){
+            layui.use(['form','layer','laydate','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                laydate.render({
+                    elem: '#start_date',
+                    format: 'yyyy-MM-dd'
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    format: 'yyyy-MM-dd'
+                });
+                var date = getBeforeDate(1);
+                $("#start_date").val(date);
+                $("#end_date").val(date);
+                
+                form.on('select(kill_status)', function(data){   
+                    var status = data.value;
+                    var $kill_money = $("#kill_money");
+                    if(status == 0){
+                        $kill_money.val("0");
+                        $kill_money.attr("disabled","disabled");
+                        $kill_money.addClass("layui-btn-disabled");
+                    }else{
+                        $kill_money.removeAttr("disabled");
+                        $kill_money.removeClass("layui-btn-disabled");
+                    }
+                });
+                initData(); 
+            });
+
+            $("#search").click(function(){
+                initData();
+            })
+               // 导出
+               $("#export").click(function() {
+                let data = {
+                    platform_id:$("#s_platform_id").val(),
+                    username:$("#username").val(),
+                    _csrf:$("#_csrf").val()
+                };
+                let url = '/admin/riskManagement/userKill/export';
+                let xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            let blob = this.response; //使用response作为返回，而非responseText
+                            let reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            let a = document.createElement("a");
+                            a.download = "会员追杀.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            });
+
+        })
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '会员追杀', //导出数据时的文件名
+                url:'/admin/riskManagement/userKill/list',
+                where:{
+                    // e_platform_id:$("#e_platform_id").val(),
+                    // e_platform_name:$("#e_platform_name").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    username:$("#username").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'username', title: '玩家账号', align:'center',sort: true},
+                    {field:'platform_name', title: '平台名称', width:110, align:'center',sort: true,
+                        templet: function(row){
+                            console.log(row)
+                            return row.platform_info?row.platform_info.platform_id+'--'+row.platform_info.platform_name:'/';
+                        }
+                    },
+                    {field:'lost_win', title: '总输赢',align:'center',sort: true,width:100,
+                        templet: function(row){
+                            let lost_win = (row.lost_win / 100).toFixed(2);
+                            if(parseFloat(lost_win) >= 0){
+                                return "<span style = 'color:green ;cursor:pointer;' title='总投注：" + (row.valid_bet / 100).toFixed(2) + "   总游戏局数："+ row.total_games+"'>"+ lost_win + "</span>";
+                            }else{
+                                return "<span style = 'color:red ;cursor:pointer;' title='总投注：" + (row.valid_bet / 100).toFixed(2)  + "   总游戏局数："+ row.total_games+"'>"+ lost_win + "</span>";
+                            }
+                        }
+                    },
+                    {field:'all_killNumber', title: '总杀数',align:'center',sort: true,width:100,
+                        templet: function(row){
+                            return parseFloat(row.all_killNumber * -100).toFixed(2) + "%";
+                        }
+                    },
+                    {field:'today_lost_win', title: '今日输赢',align:'center',sort: true,width:100,
+                        templet: function(row){
+                            let today_lost_win = (row.today_lost_win / 100).toFixed(2);
+                            if( parseFloat(today_lost_win) >= 0 ){
+                                return "<span style = 'color:green ;cursor:pointer;' title='今日投注：" + (row.today_valid_bet  / 100).toFixed(2) +"   今日游戏局数："+ row.today_total_games+"'>"+ today_lost_win + "</span>";
+                            }else{
+                                return "<span style = 'color:red ;cursor:pointer;' title='今日投注：" + (row.today_valid_bet  / 100).toFixed(2) + "   今日游戏局数："+ row.today_total_games+"'>"+ today_lost_win + "</span>";
+                            }
+                        }
+                    },
+                    {field:'today_killNumber', title: '今日杀数',align:'center',sort: true,width:100,
+                        templet: function(row){
+                            return parseFloat(row.today_killNumber * -100).toFixed(2) + "%";
+                        }
+                    },
+
+                    {field:'isOnline', title: '状态',width:100,align:'center',sort: true,width:80,
+                        templet: function(row){
+                            if(row.isOnline){
+                                return "<span style='color:green;cursor:pointer;' title='最后登录时间："+row.lastlogintime +"'>在线</span>"
+                            }else{
+                                return "<span style='cursor:pointer;'  title='最后登录时间："+ row.lastlogintime +"'>离线</span>"
+                            }
+                        }
+                    },
+                    {field:'kill_status', title: '追杀状态',align:'center',sort: true,
+                        templet: function(row){
+                            if(row.user_kill_record != null){
+                                if(row.user_kill_record.status == 0){
+                                    return "<span style='color:green;cursor:pointer;' title='追杀原因："+row.user_kill_record.kill_remark +" ;     操作人："+row.user_kill_record.operator+" ;    最后更新时间："+row.user_kill_record.update_time+"'>不追杀</span>";
+                                }else if(row.user_kill_record.status == 1){
+                                    return "<span style='color:red;cursor:pointer;' title='追杀原因："+row.user_kill_record.kill_remark +" ;     操作人："+row.user_kill_record.operator+" ;     最后更新时间："+row.user_kill_record.update_time+"'>追杀中</span>";
+                                }else{
+                                    return "未知";
+                                }
+                            }else{
+                                row.user_kill_record = {
+                                    kill_remark:"-",
+                                    operator:"-",
+                                    update_time:"-"
+                                };
+                                return "<span style='color:green;cursor:pointer;' title='追杀原因："+row.user_kill_record.kill_remark +" ;     操作人："+row.user_kill_record.operator+" ;     最后更新时间："+row.user_kill_record.update_time+"'>不追杀</span>";
+                            }
+                        }
+                    },
+                    {field:'kill_gold', title: '累计追杀金额',align:'center',sort: true,
+                        templet: function(row){
+                            return (row.kill_lost_gold / 100).toFixed(2);
+                        }
+                    },
+                    {field:'kill_money', title: '本次追杀金额',align:'center',sort: true,
+                        templet: function(row){
+                            return row.user_kill_record ? (parseInt(row.user_kill_record.kill_money)/100).toFixed(2) : "0.00";
+                        }
+                    },
+                    {field:'rest_kill_number', title: '剩余追杀金额',align:'center',sort: true,
+                        templet: function(row){
+                            return row.user_kill_record ? (parseInt(row.user_kill_record.rest_kill_number)/100).toFixed(2) : "0.00";
+                        }
+                    },
+                    {field:'', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            var cz = "";
+                            if(row.user_kill_record && row.user_kill_record.status == 1){
+                                cz += "<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='pursueKill(\""+row.id+"\",\""+ row.username +"\")'>操作</button> <% } %>";
+                            }else{
+                                cz += "<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='pursueKill(\""+row.id+"\")'>追杀</button> <% } %>";
+                            }
+                            
+                            return cz;
+                        }
+                    }
+                ]],
+            });
+            currentData = null;
+            //监听行单击事件（单击事件为：rowDouble）
+            table.on('row(tables)', function(obj){
+                var data = obj.data;
+                
+                currentData = data;
+                //标注选中样式
+                obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+            });
+        }
+        
+        /**
+         * 
+         */
+        function pursueKill(user_id,username){
+            $("#s_user_id").val(user_id);
+            $("#s_username").val(username);
+            $.ajax({
+                url:"/admin/riskManagement/userKill/getUserKill",
+                type:"get",
+                data:{
+                    "user_id" : user_id,
+                    _csrf:$("#_csrf").val()
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        if(data.kill){
+                            $("#s_user_id").val(data.kill.user_id);
+                            $("#kill_money").val(parseFloat(data.kill.kill_money / 100).toFixed(2));
+                            $("#kill_status").val(data.kill.status);
+                            $("#kill_remark").val(data.kill.kill_remark);
+                            form.render('select'); 
+                        }
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '操作',
+                            anim: 2,
+                            area: ['500px', '350px'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#killPopup")
+                        }); 
+
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+
+            
+        }
+
+        function saveKill(){
+            var user_id = $("#s_user_id").val();
+            var kill_status = $("#kill_status").val();
+            var kill_money = $("#kill_money").val();
+            var kill_remark = $("#kill_remark").val();
+            var s_username = $("#s_username").val();
+            
+            if((kill_status == "1") && kill_money == ""){
+                layer.msg("请输入追杀金额！");
+                return;
+            }
+
+            if((kill_status == "1") && kill_remark == ""){
+                layer.msg("请输入追杀原因！");
+                return;
+            }
+            if(kill_status == "0"){
+                kill_money = 0 ;
+            }
+            if(kill_status == "1"){
+                layer.confirm(`是否确认追杀玩家<b>${s_username}</b><b style="color:red;font-size:16px">${kill_money}</b>分`, {icon: 3,title:'开始追杀'}, function(index){
+                    subKill();
+                    layer.close(index);
+                });
+            }else{
+                layer.confirm(`是否取消追杀玩家<b>${s_username}`, {icon: 3,title:'取消追杀'}, function(index){
+                    subKill();
+                    layer.close(index);
+                });
+            }
+            function subKill(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/riskManagement/userKill/saveKill",
+                    type:"POST",
+                    data:{
+                        "user_id" : user_id,
+                        "kill_status":kill_status,
+                        "kill_money":kill_money,
+                        "kill_remark":kill_remark,
+                        _csrf:$("#_csrf").val()
+                    },
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            closePopup();
+                            reloadTable(); 
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#s_user_id").val("");
+            $("#kill_money").val("").removeClass("layui-btn-disabled").removeAttr("disabled");
+            $("#kill_status").val(1);
+            $("#kill_remark").val("");
+            form.render('select'); 
+        }
+
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+
+        function formatDate(fmt, date) {
+            date = new Date(date);
+            var o = {
+                "M+": date.getMonth() + 1, //月份
+                "d+": date.getDate(), //日
+                "h+": date.getHours(), //小时
+                "m+": date.getMinutes(), //分
+                "s+": date.getSeconds(), //秒
+                "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+                "S": date.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt))
+                fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt))
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                platform_id:$("#s_platform_id").val(),
+                username:$("#username").val(),
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+    </script>      
+</html>

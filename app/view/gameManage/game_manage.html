@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <!-- bootstrap  -->
+    <!-- <link rel="stylesheet" href="/public/admin/css/bootstrap.min.css"> -->
+
+    <style>
+        /* .layui-card{
+            margin: 20px 5%;
+        } */
+        /* .spanTitle{
+            font-size: 26px;
+        } */
+        .popup{
+            padding: 20px;
+            display: none;
+        }
+        .btm_width_70{
+            margin-left: 5px; 
+            margin-bottom: 2px; 
+            width: 70px;
+        }
+        .btm_width_100{
+            margin-left: 5px; 
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px; height: 96px;">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            
+            <div style="float: left;">
+                <div class="layui-form">
+                    <div class="layui-input-inline btm_width_100">
+                        <% if( childMenu.includes('bt1') ){ %> 
+                            <button type="button" class="layui-btn" id="addGame">添加游戏</button>
+                        <% } %> 
+                    </div>
+                </div>
+            </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+</body>
+
+
+<div id="gamePopup" class="popup">
+    <div class="layui-form" action="">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">游戏id</label>
+            <div class="layui-input-block">
+                <input type="number" name="game_id" id="game_id" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">游戏名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="game_name" id="game_name" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">游戏标识</label>
+            <div class="layui-input-block">
+                <input type="text" name="game_code" id="game_code" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <select name="status" id="status">
+                    <option value="0" selected>开启</option>
+                    <option value="1">关闭</option>
+                    <option value="2">暂未开放</option>
+                </select>
+            </div>
+        </div>
+
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveAddGame()">添加游戏</button>
+                <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+<div id="czPopup" class="popup">
+    <div class="layui-form" action="">
+            <div class="layui-tab" lay-filter="tabs">
+                <!-- <ul class="layui-tab-title">
+                    <li class="layui-this" lay-id="1">编辑</li>
+                    <li lay-id="2">删除</li>
+                </ul> -->
+                <input type="hidden" id='c_game_id' />
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">游戏id</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="e_game_id" id="e_game_id" class="layui-input" readonly="readonly">
+                            </div>
+                        </div>
+                
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">游戏名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="e_game_name" id="e_game_name" class="layui-input">
+                            </div>
+                        </div>
+                
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">游戏标识</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="e_game_code" id="e_game_code" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-block">
+                                <select name="e_status" id="e_status">
+                                    <option value="0" selected>开启</option>
+                                    <option value="1">关闭</option>
+                                    <option value="2">暂未开放</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" onclick="saveEditGame()">修改游戏</button>
+                                <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="layui-tab-item">
+                        <div class="layui-form-item" style="text-align: center;margin-top:10px">
+                                <button type='button' class='layui-btn layui-btn-danger' onclick="deleteGame()">删除</button>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+    </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+
+    <script>
+
+        var GAMETAG = {
+            1: '推荐',
+            2:'火爆',
+            3:'维护',
+            4:'敬请期待',
+        }
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table ,element, indexPopup;
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                element = layui.element;
+                initData();
+
+            });
+
+            $("#addGame").click(function(){
+                addGame();
+            })            
+
+        })
+
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '游戏设置', //导出数据时的文件名
+                url:'/admin/operateManage/gameManage/gameManage/list',
+                where:{_csrf:$("#_csrf").val()}, //其他请求参数
+                page:false,
+                cols: [[
+                    {field:'game_id', title: '游戏ID',align:'center'},
+                    {field:'game_name', title: '游戏名称',align:'center'},
+                    {field:'game_code', title: '游戏标识',align:'center'},
+                    {field:'status', title: '状态',align:'center', templet: function(row){
+                        if( row.status == 0 ){
+                            return "<span style='color:green'>开启</span>"
+                        }else if(row.status == 1){
+                            return "<span style='color:red'>关闭</span>"
+                        }else{
+                            return "<span style='color:gray'>暂未开放</span>"
+                        }
+                    }},
+                    {field:'cz', title: '操作',align:'center',hide:!flag,
+                        templet: function(row){
+                            return "<% if( childMenu.includes('bt1') ){ %>  <button type='button' class='layui-btn layui-btn layui-btn-xs' onclick='openCZpopup("+row.game_id+")'>编辑</button><button type='button' class='layui-btn layui-btn-danger layui-btn-xs' onclick=\"deleteGame('" +row.game_name+ "'," + row.game_id +")\">删除</button> <% } %>";
+                        }
+                    }
+                ]]
+            });
+        }
+        
+
+        function openCZpopup(game_id){
+            //loading层
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/gameManage/gameManage/findGameById",
+                type:"POST",
+                data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    console.log("data:",data);
+                    if(data.status == 0 && data.game){
+                        $("#e_game_id").val(data.game.game_id);
+                        $("#e_game_name").val(data.game.game_name);
+                        $("#e_game_code").val(data.game.game_code);
+                        $("#e_status").val(data.game.status);
+                        form.render('select'); 
+
+                        indexPopup = layer.open({
+                            type: 1,
+                            skin: 'layui-layer-demo', //样式类名
+                            closeBtn: 1, //显示关闭按钮1
+                            cancel: function(index, layero){
+                                closePopup();
+                            },
+                            title: '编辑游戏',
+                            anim: 2,
+                            area: ['700px', '500px'],
+                            shadeClose: false, //开启遮罩关闭
+                            content: $("#czPopup"),
+                            cancel: function () {
+                                closePopup();
+                            }
+                        });
+                        element.tabChange('tabs', 1); // 选中一个标签
+                    }else{
+                        layer.msg('操作失败！');
+                    }
+                    
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);   
+                }
+            })
+        }
+
+
+        function deleteGame(game_name,game_id){
+            layer.confirm("是否确认删除【<span style='color:red'>"+ game_name +"</span>】这个游戏?", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                // var game_id = $("#e_game_id").val();
+                $.ajax({
+                    url:"/admin/operateManage/gameManage/gameManage/deleteGame",
+                    type:"POST",
+                    data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            initData();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#game_id").val("");
+            $("#game_name").val("");
+            $("#game_code").val("");
+            $("#status").val("0");
+
+            $("#e_game_code").val("");
+            $("#e_game_name").val("");
+            $("#e_status").val("0");
+            form.render();
+        }
+
+        function addGame(){
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 1, //显示关闭按钮1
+                cancel: function(index, layero){
+                    closePopup();
+                },
+                title: '添加游戏',
+                anim: 2,
+                area: ['700px', '500px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#gamePopup"),
+                cancel: function () {
+                    closePopup();
+                }
+            });
+        }
+
+        function saveAddGame(){
+            var game_id = $('#game_id').val().trim()
+            var game_name = $("#game_name").val().trim();
+            var game_code = $("#game_code").val().trim();
+            var status = $('#status').val()
+
+            if(game_id == ""){
+                layer.msg('游戏id不能为空！');
+                return ;
+            }
+
+            if(game_name == ""){
+                layer.msg('游戏名称不能为空！');
+                return ;
+            }
+
+            if(game_code == ""){
+                layer.msg('游戏标识不能为空！');
+                return ;
+            }
+
+           
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/gameManage/gameManage/saveAddGame",
+                type:"POST",
+                data:{
+                    game_id: game_id,
+                    game_name:game_name,
+                    game_code:game_code,
+                    status:status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function saveEditGame(){
+            var game_id = $("#e_game_id").val().trim();
+            var game_name = $("#e_game_name").val().trim();
+            var game_code = $("#e_game_code").val().trim();
+            var status = $("#e_status").val()
+
+            if(game_id == ""){
+                layer.msg('游戏id不能为空！');
+                return ;
+            }
+
+            if(game_name == ""){
+                layer.msg('游戏名称不能为空！');
+                return ;
+            }
+
+            if(game_code == ""){
+                layer.msg('游戏标识不能为空！');
+                return ;
+            }
+           
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/operateManage/gameManage/gameManage/saveEditGame",
+                type:"POST",
+                data:{
+                    game_id: game_id,
+                    game_name:game_name,
+                    game_code:game_code,
+                    status:status,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        initData();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function showRoom(game_id,obj){
+            //iframe窗
+            layer.open({
+                type: 2,
+                title: $(obj).text() + '-房间设置',
+                shadeClose: true,
+                shade: false,
+                maxmin: true, //开启最大化最小化按钮
+                area: ['893px', '600px'],
+                content: '/admin/operateManage/gameManage/roomManage?game_id='+game_id
+            });
+        }
+
+    </script>      
+</html>

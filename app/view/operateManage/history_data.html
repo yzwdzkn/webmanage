@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Title -->
+    <title><%=title%></title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/public/admin/img/core-img/favicon.ico">  
+    <!-- layui  -->
+    <!-- <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css"> -->
+
+    <!-- Master Stylesheet [If you remove this CSS file, your file will be broken undoubtedly.] -->
+    <link rel="stylesheet" href="/public/admin/css/style.css">
+</head>
+
+<body>
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- ======================================
+    ******* Page Wrapper Area Start **********
+    ======================================= -->
+    <!-- Page Content -->
+    <!-- Main Content Area -->
+    <div class="main-content" style="height: 100%">
+        <div class="container-fluid">
+            <div class="row">
+
+                <div class="col-12">
+                    <div class="card bg-boxshadow mb-30">
+                        <div class="card-body" >
+                            <div class="c3-chart-area">
+                                <h4 class="card-title mb-30">历史数据</h4>
+                                <div class="c3-chart">
+                                    <div id="basic_chart" style="height:500px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card bg-boxshadow mb-30">
+                        <div class="card-body" >
+                            <div class="c3-chart-area">
+                                <h4 class="card-title mb-30">游戏累计下注</h4>
+                                <div class="c3-chart">
+                                    <div id="game_bet" style="height:500px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card bg-boxshadow mb-30">
+                        <div class="card-body" >
+                            <div class="c3-chart-area">
+                                <h4 class="card-title mb-30">游戏投注人数</h4>
+                                <div class="c3-chart">
+                                    <div id="game_bet_number" style="height:500px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card bg-boxshadow mb-30">
+                        <div class="card-body" >
+                            <div class="c3-chart-area">
+                                <h4 class="card-title mb-30">游戏活跃</h4>
+                                <div class="c3-chart">
+                                    <div id="game_active" style="height:500px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card bg-boxshadow mb-30">
+                        <div class="card-body" >
+                            <div class="c3-chart-area">
+                                <h4 class="card-title mb-30">游戏注册人数</h4>
+                                <div class="c3-chart">
+                                    <div id="game_register_count" style="height:500px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================
+    ********* Page Wrapper Area End ***********
+    ======================================= -->
+
+    <!-- Must needed plugins to the run this Template -->
+    <script src="/public/admin/js/jquery.min.js"></script>
+    <script src="/public/admin/js/popper.min.js"></script>
+    <script src="/public/admin/js/bootstrap.min.js"></script>
+    <script src="/public/admin/js/admetro.bundle.js"></script>
+
+    <!-- These plugins only need for the run this page -->
+    <script src="/public/admin/js/echart-basic.js"></script>
+    <script src="/public/admin/js/echarts.js"></script>
+    <!-- <script src="/public/admin/js/basic-script.js"></script> -->
+    <!-- <script src="/public/admin/js/custom.js"></script> -->
+
+    <!-- Active JS -->
+    <script src="/public/admin/js/active.js"></script>
+    <script src="/public/admin/js/tabsIframeClose.js"></script>
+  <!-- layui js -->
+  <!-- <script src="/public/admin/static/layui/layui.js"></script>-->
+
+    <script>
+        $(function(){
+           // Initialize after dom ready
+          var echartsWindow = $(window);
+       
+        //   chartBasic.showLoading(); // 显示加载动画
+
+        $.ajax({
+            url:"/admin/operateManage/historyDataManage/initData",
+            type:"GET",
+            data:{
+                _csrf:$("#_csrf").val()
+            },
+            timeout:60000, //1分钟
+            success:function(data){
+                var option = {
+                    title: {text: '最近30天营收统计',subtext: ''},
+                    tooltip: {},
+                    color: ["#007bff"],
+                    legend: {data: ['营收']},
+                    calculable: true,
+                    xAxis: [{type: 'category',data: data.data.day}],yAxis: [{type: 'value'}],
+                    grid: [{bottom: '55%'},{top: '55%'}],
+                    series: [{ name: '营收',type: 'bar',data: data.data.value,markPoint: {data: [{type: 'max',name: '最大营收'},{type: 'min',name: '最小营收'}]},markLine: {data: [{type: 'average',name: 'average value'}]}}]
+                }
+                var chartBasic = echarts.init(document.getElementById('basic_chart'));
+                chartBasic.setOption(option);
+
+                // 游戏累计下注 start
+                var seriesArr = [];
+                for(var key in data.data.gamebetData.gameBet){
+                    if(data.data.gamebetData.gameBet.hasOwnProperty(key)){ 
+                        seriesArr.push({name:key,type:'line',data:data.data.gamebetData.gameBet[key]})
+                    }
+                }
+                var gameBetOption = {title : { text: '游戏累计下注',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gamebetData.gameArr },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.gamebetData.dateArr
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}人'}}],
+                    series:seriesArr
+                }
+                var gameBet = echarts.init(document.getElementById('game_bet'));
+                gameBet.setOption(gameBetOption);
+                // end
+
+                // 游戏投注人数 start
+                var betNumberSeriesArr = [];
+                for(var key in data.data.gamebetData.gameBetNumber){
+                    if(data.data.gamebetData.gameBetNumber.hasOwnProperty(key)){ 
+                        betNumberSeriesArr.push({name:key,type:'line',data:data.data.gamebetData.gameBetNumber[key]})
+                    }
+                }
+                var gameBetNumberOption = {title : { text: '游戏投注人数',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gamebetData.gameArr },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.gamebetData.dateArr
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}人'}}],
+                    series:betNumberSeriesArr
+                }
+                var gameBetNumber = echarts.init(document.getElementById('game_bet_number'));
+                gameBetNumber.setOption(gameBetNumberOption);
+                // end
+
+                // 游戏活跃 start
+                var userActiveOption = {
+                    title: {text: '最近30游戏活跃',subtext: ''},
+                    tooltip: {},
+                    color: ["#007bff"],
+                    legend: {data: ['活跃']},
+                    calculable: true,
+                    xAxis: [{type: 'category',data: data.data.userActiveData.dateArr,boundaryGap : false,}],
+                    yAxis: [{type: 'value'}],
+                    series: [{ name: '活跃',type:'bar',data:data.data.userActiveData.valueArr}]
+                }
+                var userActiveChart = echarts.init(document.getElementById('game_active'));
+                userActiveChart.setOption(userActiveOption);
+                // end
+                
+                // 游戏注册人数 start
+                var userRegisterCountOption = {
+                    title: {text: '游戏注册人数',subtext: ''},
+                    tooltip: {},
+                    color: ["#007bff"],
+                    legend: {data: ['注册人数']},
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    calculable: true,
+                    xAxis: [{type: 'category',data: data.data.userRegisterCount.dateArr,boundaryGap : false,}],
+                    yAxis: [{type: 'value'}],
+                    series: [{ name: '注册人数',type:'bar',data:data.data.userRegisterCount.valueArr}]
+                }
+                var userRegisterCountChart = echarts.init(document.getElementById('game_register_count'));
+                userRegisterCountChart.setOption(userRegisterCountOption);
+                // end
+                
+            },error: function(xhr, status, error){
+                console.log("[ERROR] - ",error);
+            }
+        })
+
+       
+
+        //   setTimeout(function(){
+            // chartBasic.hideLoading(); // 隐藏加载动画
+            // Load data into the ECharts instance 
+            
+        //   },1000)
+         
+
+          echartsWindow.on('resize', function () {
+              if (chartBasic != null && chartBasic != undefined) {
+                  chartBasic.resize();
+              }
+          });            
+        })
+   
+    </script>      
+</body>
+
+</html>

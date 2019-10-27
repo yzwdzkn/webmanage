@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+   
+</head>
+<body>
+    
+        <div class="layui-card">
+            <div class="card-header" style="padding-bottom:10px;">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <div class="layui-form">
+                    <div class="layui-row">
+                        <div class="layui-col-md3">
+                            <div class="layui-input-inline btm_width_100" >
+                                <% if( childMenu.includes('bt1') ){ %> 
+                                    <button type="button" class="layui-btn" onclick="openAdminPopup(0)" >添加账户</button>
+                                <% } %> 
+                            </div>
+                        </div>
+                        <div style="float: right;">
+                            <% if( childMenu.includes('bt2') ){ %> 
+                                <div class="layui-form">
+                                    <div class="layui-inline" >
+                                        <div class="layui-input-block"style=" width: 150px;margin-left: 5px;">
+                                            <select id="s_status" lay-filter="s_status">
+                                            <option value="-1">所有状态</option>
+                                            <option value="0">已启用</option>
+                                            <option value="1">未启用</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                        <input type="text" id="s_username"  placeholder="账号" class="layui-input">
+                                    </div>
+                                    <div class="layui-input-inline btm_width_70">
+                                            <button type="button" class="layui-btn" id="search">搜索</button>
+                                    </div>
+                                </div>
+                            <% }else{%>  
+                                <input type="hidden" id="s_username" >
+                                <input type="hidden" id="s_status" value="0">
+                            <% } %> 
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+
+</body>
+
+<div id="adminPopup" class="popup">
+    <div class="layui-form" action="">
+            <div style="display:none;" class="layui-form-item">
+                <label class="layui-form-label">账户类型</label>
+                <div class="layui-input-block" id="type">
+                    <input type="radio" name="type" value="0" title="系统账号" lay-filter="type" checked>
+                    <input type="hidden" name="type" value="1" title="平台账号" lay-filter="type" >
+                </div>
+            </div>
+            <input type="hidden" name="type" value="1" checked >
+    
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">账户名称</label>
+            <div class="layui-input-block">
+                <input type="hidden" id="action" class="layui-input">
+                <input type="hidden" id="id" class="layui-input">
+                <input type="text" id="username" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" id="passwordItem">
+            <label class="layui-form-label">账户密码</label>
+            <div class="layui-input-block">
+                <input type="password" id="password" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">账户角色</label>
+            <div class="layui-input-block">
+                <select id="role_id" lay-filter="role_id">
+                    <option value="0" selected="">请选择...</option>   
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">账户昵称</label>
+            <div class="layui-input-block">
+                <input type="text" id="nickname" class="layui-input">
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">账户状态</label>
+            <div class="layui-input-block" id="status">
+                <input type="radio" name="status" value="0" title="开启" checked>
+                <input type="radio" name="status" value="1" title="关闭">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">账户描述</label>
+            <div class="layui-input-block">
+                <textarea id="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="saveAdmin()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="passwordPopup" class="popup">
+    <div class="layui-form-item">
+        <label class="layui-form-label">新密码</label>
+        <div class="layui-input-inline"style='width:140px'>
+            <input type="text" id="new_password" class="layui-input">
+            <input type="hidden" id="action" class="layui-input">
+            <input type="hidden" id="id" class="layui-input">
+        </div>
+        <button class="layui-btn" onclick="resetPassword()">随机密码</button>
+    </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" onclick="savePassword()">提交</button>
+                <button class="layui-btn" onclick="closePopup()">取消</button>
+            </div>
+        </div>
+</div>
+
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<script src="/public/admin/js/md5.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var flag = eval('<%= childMenu.includes("bt1") %>');
+        var form, layer , table , indexPopup ;
+        var username = "<%=admin.username %>"
+        $(function(){
+            layui.use(['element','form','layer','table'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                form.on('radio(type)', function (data) {        
+                    console.log(data.value);
+                    findRoles(data.value,function(){});
+                });
+                
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+            $('#type input[name="type"]').click(function(){
+                console.log("jj:",$(this).val());
+            })
+
+            
+
+        })
+
+        function initData(){
+            var game_id = $("#s_game_id").val();
+
+            tableObj = table.render({
+                elem: '#tables',
+                title: '账户管理', //导出数据时的文件名
+                url:'/admin/systemSetting/adminManage/list',
+                where:{
+                    // type:$("#s_type").val(),
+                    status:$("#s_status").val(),
+                    username:$("#s_username").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'id', title: '编号', align:'center',sort: true},
+                    {field:'username', title: '账号', align:'center'},
+                    {field:'nickname', title: '昵称', align:'center'},
+                    {field:'role_id',title: '角色', sort: true, align:'center',
+                        templet: function(row){
+                            return row.role ? row.role.name : "";
+                        }
+                    },
+                    {field:'status',title: '状态', sort: true, align:'center',
+                        templet: function(row){
+                            console.log(row)
+                            if(row.status == 0){
+                                return "已启用"
+                            }else{
+                                return "<span style='color:red'>已关闭</span>"
+                            }
+                        }
+                    },
+                    {field:'create_time',title: '创建时间', sort: true, align:'center'},
+                    {field:'last_login_time',title: '最后登录时间', sort: true, align:'center'},
+                    {field:'description',title: '描述', sort: true, align:'center'},
+                    {field:'cz', title: '操作',align:'center',width:200,hide:!flag,
+                        templet: function(row){
+                            var cz = ""
+                            if(row.is_super){
+                                cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openAdminPopup(1,"+row.id+")'>编辑</button><% } %>";
+                                return cz;
+                            }else{
+                                cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='openAdminPopup(1,"+row.id+")'>编辑</button><% } %>";
+                                cz += "<% if( childMenu.includes('bt1') ){ %> </button><button type='button' class='layui-btn layui-btn-xs layui-btn-danger' onclick='deleteAdmin("+row.id+",\""+row.username+"\")'>删除</button><% } %>";
+                                cz += "<% if( childMenu.includes('bt1') ){ %> <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick='updatePassword("+row.id+",\""+row.username+"\")'>修改密码</button><% } %>";
+                                return cz;
+                            }
+                        }
+                    }
+                ]]
+            });
+        }
+      
+        function openAdminPopup(action,id){
+            $("#action").val(action);
+            if( action == 0 ){
+                var type =  $("input[name='type']:checked").val();
+                findRoles(type,function(){
+                    $("#username").removeAttr("readonly");
+                    $("#passwordItem").css("display","block");
+                    indexPopup = layer.open({
+                        type: 1,
+                        skin: 'layui-layer-demo', //样式类名
+                        closeBtn: 1, //显示关闭按钮1
+                        cancel: function(index, layero){
+                            closePopup();
+                        },
+                        title: '添加账户',
+                        anim: 2,
+                        area: ['500px', '520px'],
+                        shadeClose: false, //开启遮罩关闭
+                        content: $("#adminPopup")
+                    });
+                })
+            }else if( action == 1 ){
+                $("#username").attr("readonly","readonly");
+                $("#passwordItem").css("display","none");
+                $.ajax({
+                    url:"/admin/systemSetting/adminManage/get",
+                    type:"POST",
+                    data:{
+                        id:id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        if(data.status == 0){
+                            findRoles(data.admin.type,function(){
+                                $("#id").val(data.admin.id);
+                                $("#username").val(data.admin.username);
+                                $("#nickname").val(data.admin.nickname);
+                                if(username == data.admin.username){
+                                    $("#role_id").attr("disabled","disabled");
+                                    $("#status input[name='status']").attr("disabled","disabled");
+                                }else{
+                                    $("#role_id").removeAttr("disabled");
+                                    $("#status input[name='status']").removeAttr("disabled");
+                                }
+                                $("#role_id").val(data.admin.role_id);
+                                $("#status input[value='"+data.admin.status+"']").prop("checked",true);
+                                $("#type input[value='"+data.admin.type+"']").prop("checked",true);
+                                $("#description").val(data.admin.description);
+                                form.render(); 
+                                indexPopup = layer.open({
+                                    type: 1,
+                                    skin: 'layui-layer-demo', //样式类名
+                                    closeBtn: 1, //显示关闭按钮1
+                                    cancel: function(index, layero){
+                                        closePopup();
+                                    },
+                                    title: '编辑账户',
+                                    anim: 2,
+                                    area: ['500px', '520px'],
+                                    shadeClose: false, //开启遮罩关闭
+                                    content: $("#adminPopup")
+                                });
+                            })
+                           
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                    }
+                })
+            } 
+
+        }
+
+        function findRoles(type,cb){
+            $.ajax({
+                url:"/admin/systemSetting/adminManage/findRoles",
+                type:"get",
+                data:{
+                    type : type,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    if(data.status == 0){
+                        $("#role_id").empty().append('<option value="0" selected="">请选择...</option>   ');
+                        for (var i = 0; i < data.roles.length; i++) {
+                            $("#role_id").append('<option value="'+data.roles[i].id+'">'+data.roles[i].name+'</option>');
+                        }
+                        form.render('select'); 
+                        cb();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                }
+            })
+
+        }
+
+        function saveAdmin(){
+            var action = $("#action").val();
+            var id = $("#id").val();
+            var username = $("#username").val().trim();
+            var password = $("#password").val().trim();
+            var nickname = $("#nickname").val().trim();
+            var role_id = $("#role_id").val();
+            var status =  $("input[name='status']:checked").val();
+            var type =  $("input[name='type']:checked").val();
+            var description = $("#description").val().trim();
+
+            if( !vilidParamLength(username,20,"用户名长度不超过20") ||!vilidParamLength(password,20,"密码长度不超过20")||!vilidParamLength(nickname,20,"昵称长度不超过20")||!vilidParamLength(description,100,"描述长度不超过100")) return;
+
+            if( username == "" ){
+                layer.msg('用户名不能为空！');
+                return;
+            }
+            if( action == 0 && password == ""){
+                layer.msg('密码不能为空！');
+                return;
+            }
+            if(role_id == "0"){
+                layer.msg('请选择账号角色！');
+                return;
+            }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/systemSetting/adminManage/saveAdmin",
+                type:"POST",
+                data:{
+                    action:action,
+                    id:id,
+                    username:username,
+                    password:$.md5(password),
+                    nickname:nickname,
+                    status:status,
+                    type:type,
+                    role_id:role_id,
+                    description:description,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function deleteAdmin(id,name){
+            layer.confirm("是否确认删除<span style='color:red'> "+name+" </span>这条账户？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/systemSetting/adminManage/deleteAdmin",
+                    type:"POST",
+                    data:{id:id,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0){
+                            layer.msg('操作成功');
+                            reloadTable();
+                            closePopup();
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        
+        // function resetPassword(id,name){
+        //     console.log(id);
+        //     console.log(name)
+        //     layer.confirm("是否确认重置<span style='color:red'> "+name+" </span>这条账户的密码？",
+        //          {
+        //         btn: ['确定','取消'] //按钮
+        //     }, 
+        //     function(){
+        //         var index = layer.load(1, {
+        //             shade: [0.1,'#fff'] //0.1透明度的白色背景
+        //         });
+        //         $.ajax({
+        //             url:"/admin/systemSetting/adminManage/resetPassword",
+        //             type:"POST",
+        //             data:{id:id,_csrf:$("#_csrf").val()},
+        //             timeout:60000, //1分钟
+        //             success:function(data){
+        //                 layer.close(index);
+        //                 if(data.status == 0){
+        //                     layer.alert('密码重置成功,新密码为：'+data.password, {
+        //                         icon: 1,
+        //                         closeBtn: 0
+        //                     });
+        //                 }else{
+        //                     layer.msg( data.msg || '操作失败');
+        //                 }
+        //             },
+        //             error: function(xhr, status, error){
+        //                 console.log("[ERROR] - ",error);
+        //                 layer.close(index);
+        //             }
+        //         })
+        //     }, function(){
+        //     });
+        // }
+        function updatePassword(id,name){
+            $.ajax({
+                    url:"/admin/systemSetting/adminManage/get",
+                    type:"POST",
+                    data:{
+                        id:id,
+                        _csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        if(data.status == 0){
+                            findRoles(data.admin.type,function(){
+                                $("#id").val(data.admin.id);
+                                form.render(); 
+                                indexPopup = layer.open({
+                                    type: 1,
+                                    skin: 'layui-layer-demo', //样式类名
+                                    closeBtn: 1, //显示关闭按钮1
+                                    cancel: function(index, layero){
+                                        closePopup();
+                                    },
+                                    title: '重置密码',
+                                    anim: 2,
+                                    area: ['400px', '200px'],
+                                    shadeClose: false, //开启遮罩关闭
+                                    content: $("#passwordPopup")
+                                });
+                            })
+                           
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                    }
+                })
+            } 
+        function resetPassword(){
+            var password = parseInt(Math.random() * 1000000);
+            $("#new_password").val(password)
+        }
+        function savePassword(){
+            var password = $("#new_password").val().trim();
+            console.log(password);
+            var id = $("#id").val();
+            console.log(id);
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/systemSetting/adminManage/savePassword",
+                type:"POST",
+                data:{
+                    password:$.md5(password),
+                    id:id,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('操作成功');
+                        reloadTable();
+                        closePopup();
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#action").val("");
+            $("#id").val("");
+            $("#username").val("");
+            $("#password").val("");
+            $("#nickname").val("");
+            $("#role_id").val("0");
+            $("#status input[value='0']").prop("checked",true);
+            $("#type input[value='0']").prop("checked",true);
+            $("#description").val("");
+            $("#new_password").val("");
+            $("#role_id").removeAttr("disabled");
+            $("#status input[name='status']").removeAttr("disabled");
+
+            form.render();                            
+        }
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                username:$("#s_username").val(),
+                _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+       
+            
+    </script>      
+</html>

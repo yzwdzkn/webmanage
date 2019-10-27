@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>KK 后台管理系统</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/public/admin/img/favicon.ico">
+
+    <link rel="stylesheet" href="/public/admin/css/style.css">
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+</head>
+
+<body style="background-color: #f1f0f4 !important">
+    <!-- Tab 右键菜单 -->
+    <div id="appMenu" class="layui-form" style="display: none">
+        <div id="el-dropdown">
+            <ul tabindex="0" >
+                <li target="current">关闭当前标签</li>
+                <li target="prevAll">关闭左侧标签</li> 
+                <li target="nextAll">关闭右侧标签</li> 
+                <li target="other">关闭其他</li> 
+                <li target="all">关闭全部</li>
+            </ul>
+        </div>
+    </div>
+    <!--  -->
+    
+    <!-- Preloader -->
+    <div id="preloader"></div>
+    <input type="hidden" id="_csrf" value="<%=csrf%>">
+    <!-- ======================================
+    ******* Page Wrapper Area Start **********
+    ======================================= -->
+    <div class="admetro-page-wrapper">
+        <!-- Sidemenu Area -->
+        <div class="admetro-sidemenu-area">
+            <!-- Desktop Logo -->
+            <!-- <div class="admetro-logo">
+                <a href="javascript:;"><img class="desktop-logo" src="/public/admin/img/logo.png" alt="Desktop Logo"> <img class="small-logo" src="/public/admin/img/small-logo.png" alt="Mobile Logo"></a>
+            </div> -->
+            <div class="header-logo">
+                <a href="javascript:;">
+                    <img class="desktop-logo" src="/public/admin/img/header_logo.png" alt="Logo">
+                </a>
+            </div>
+
+            <!-- Side Nav -->
+            <div class="admetro-sidenav" id="admetroSideNav">
+                <!-- Side Menu Area -->
+                <div class="side-menu-area">
+                    <%- menuHtml %>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="admetro-page-content">
+            <!-- Top Header Area -->
+            <header class="top-header-area d-flex align-items-center justify-content-between">
+                <div class="left-side-content-area d-flex align-items-center">
+                    <!-- Mobile Logo -->
+                    <div class="mobile-logo mr-3 mr-sm-4">
+                        <a href="index.html"><img src="/public/admin/img/small-logo.png" alt="Mobile Logo"></a>
+                    </div>
+
+                    <!-- Triggers -->
+                    <div class="admetro-triggers mr-1 mr-sm-3">
+                        <div class="menu-collasped" id="menuCollasped">
+                            <i class="ti-align-right" style="color: #c0c1fc !important;font-size: 14px;"></i>
+                        </div>
+                        <div class="mobile-menu-open" id="mobileMenuOpen">
+                            <i class="ti-align-right"></i>
+                        </div>
+                    </div>
+                    <div id="datetime" style="color: #c0c1fc !important">
+                        <script>
+                            setInterval("document.getElementById('datetime').innerHTML=new Date().toLocaleString();", 1000);
+                        </script>
+                    </div>
+                    
+                </div>
+
+                <div class="right-side-navbar d-flex align-items-center justify-content-end">
+                    <!-- Top Bar Nav -->
+                    <ul class="d-flex align-items-center">
+                            <!-- <li class="nav-item dropdown">
+                                <div id="datetime" style="font-weight: bold">
+                                    <script>
+                                        setInterval("document.getElementById('datetime').innerHTML=new Date().toLocaleString();", 1000);
+                                    </script>
+                                </div>
+                            </li> -->
+                        <!-- <li class="nav-item dropdown">
+                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-email" aria-hidden="true"></i></button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <div class="top-message-area">
+                                    <div class="top-message-heading">
+                                        <div class="heading-title">
+                                            <h6>Messages</h6>
+                                        </div>
+                                        <span>5 New</span>
+                                    </div>
+                                    <div class="message-box" id="messageBox">
+                                        <a href="#" class="dropdown-item">
+                                            <i class="ti-email"></i>
+                                            <span class="message-text">
+                                                <span>6-hour video course on Angular</span>
+                                                <span>3 min ago</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" class="dropdown-item">
+                                            <i class="ti-email"></i>
+                                            <span class="message-text">
+                                                <span>Google Ads: You'll get a refund soon</span>
+                                                <span>27 min ago</span>
+                                            </span>
+                                        </a>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </li> -->
+<!-- 
+                        <li class="nav-item dropdown">
+                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-bell" aria-hidden="true"></i> <span class="active-status"></span></button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <div class="top-notifications-area">
+                                    <div class="notifications-heading">
+                                        <div class="heading-title">
+                                            <h6>Notifications</h6>
+                                        </div>
+                                        <span>5 New</span>
+                                    </div>
+
+                                    <div class="notifications-box" id="notificationsBox">
+                                        <a href="#" class="dropdown-item"><i class="ti-face-smile bg-success"></i><span>We've got something for you!</span></a>
+                                        <a href="#" class="dropdown-item"><i class="ti-bell bg-danger"></i><span>Domain names expiring on Tuesday</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </li> -->
+
+                        <li class="nav-item dropdown">
+                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="/public/admin/img/women.jpg" alt=""></button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <!-- User Profile Area -->
+                                <div class="user-profile-area">
+                                    <div class="user-profile-heading">
+                                        <!-- Thumb -->
+                                        <div class="profile-thumbnail">
+                                            <img src="/public/admin/img/women.jpg" alt="">
+                                        </div>
+                                        <!-- Profile Text -->
+                                        <div class="profile-text">
+                                            <h6><%=admin.username%></h6>
+                                            <span><%=admin.nickname%></span>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:;" onclick="editPasswordOpen()" class="dropdown-item"><i class="fa fa-expeditedssl" aria-hidden="true"></i>修改密码</a>
+                                    <a href="/logout" class="dropdown-item"><i class="fa fa-sign-out" aria-hidden="true"></i>退出登录</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown" style="height: 35px;line-height: 35px;padding-right: 30px;margin-right: 15px;border-right: 1px solid #8e8fda;">
+                            <h6 style="line-height: 35px !important;"><%=admin.username%></h6>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <button type='button' class='layui-btn layui-btn-xs layui-btn-primary' style="background-color: #7b7de5 !important;font-size: 14px;" ><a href="/logout" style="color: #c0c1fc !important">注销</a></button>
+                        </li>
+                    </ul>
+                </div>
+            </header>
+            <!-- Main Content Area -->
+            <div class="main-content" style="background-color: #f1f0f4;margin: 0px ;padding: 0px ">
+                <!-- Accordins area Start -->
+                <div style="padding: 0px 0px 0px 5px;">
+                    <div class="layui-tab" lay-allowClose="true" lay-filter="tabs" style="padding-top: 10px; margin-top: 1px;width: 100%;">
+
+                        <ul class="layui-tab-title" style="width: 100%;">
+                            <% if(menu){ %>
+                                <li lay-id="<%=menu.id%>" class="layui-this"><%=menu.module_name%></li>
+                            <% } %>
+                        </ul>
+                      
+                        <div class="layui-tab-content" style="width: 100%;">
+                            <% if(menu){ %>
+                                <div class="layui-tab-item layui-show">
+                                    <iframe src="<%=menu.url%>" id="<%=menu.id%>" frameborder="0" class="iframeH" width="100%"></iframe>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- Footer Area -->
+            <footer class="footer-area d-flex align-items-center flex-wrap">
+                <!-- Copywrite Text -->
+                <div class="copywrite-text">
+                    <!-- <p>KK Manage System &copy; 2019 created by <a href="#">KK-Manage</a></p> -->
+                </div>
+            </footer>
+        </div>
+            
+    </div>
+
+    <div id="editPasswordPopup" class="popup">
+        <div class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="padding: 0px">原密码</label>
+                <div class="layui-input-block">
+                    <input type="password" id="password" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="padding: 0px">新密码</label>
+                <div class="layui-input-block">
+                    <input type="password" id="newPassword" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label" style="padding: 0px">确认新密码</label>
+                <div class="layui-input-block">
+                    <input type="password" id="reNewPassword" class="layui-input">
+                </div>
+            </div>    
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" onclick="editPassword()">提交</button>
+                    <button class="layui-btn layui-btn-primary" onclick="closePopup()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="firstId" value="<%=menu.id%>">
+
+    
+    <!-- ======================================
+    ********* Page Wrapper Area End ***********
+    ======================================= -->
+
+    <!-- Must needed plugins to the run this template -->
+    <script src="/public/admin/js/jquery.min.js"></script>
+
+    <!-- layui -->
+    <script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+   
+
+    <script src="/public/admin/js/popper.min.js"></script>
+    <script src="/public/admin/js/bootstrap.min.js"></script>
+    <script src="/public/admin/js/admetro.bundle.js"></script>
+
+    <!-- These plugins only need for the run this page -->
+    <script src="/public/admin/js/accordion.js"></script>
+
+    <!-- Active JS -->
+    <script src="/public/admin/js/active.js"></script>
+    <!-- md5 JS -->
+    <script src="/public/admin/js/md5.js"></script>
+    <!-- tabs  -->
+    <script src="/public/admin/js/tabs.js"></script>
+
+    <script>
+        var element ,layer,form ,indexPopup;
+        let tabId = 0;
+        layui.use(['element','layer','form'], function(){
+            form = layui.form;
+            element = layui.element;          
+            element.init();
+            element.on('tab', function() {
+                // 10-14  dq 
+                if ($(this).attr('lay-id') === tabId) return;
+                tabId = $(this).attr('lay-id');
+                element.tabChange('tabs', tabId);
+                $('.sidebar-menu > li').removeClass("menu-open");
+                $('.treeview-menu').hide();
+                $('.treeview-menu > li').removeClass("active");
+                $('.treeview-menu.child-menu').hide();
+                $(`a[data-id=${tabId}]`).parent().parent().parent().addClass("menu-open");
+                $(`a[data-id=${tabId}]`).parent().parent().show();
+                $(`a[data-id=${tabId}]`).parent().addClass("active");  
+                // end
+            });
+
+            // $(`a[data-id=${$("#firstId").val()}]`).click();  自动展开
+            // if ($(`a[data-id=${$("#firstId").val()}]`).parent().parent().parent().hasClass('menu-open')) {
+            //     return
+            // };
+            // $(`a[data-id=${$("#firstId").val()}]`).parent().parent().show()
+            // $(`a[data-id=${$("#firstId").val()}]`).parent().parent().parent().children().addClass('menu-open');
+
+        });
+
+       
+
+
+        $('.amenu').click(function(){
+            var title = $(this).text();
+            var id = $(this).attr('data-id');
+           
+            var heights = height-62;
+            var exist=$("li[lay-id='"+id+"']").length; //判断是否存在tab
+            //新增一个Tab项 
+            if(exist==0){
+                element.tabAdd('tabs', {
+                    title: title 
+                    ,content: '<iframe src="'+$(this).attr('data-href')+'" id="' + id +'" frameborder="0" class="iframeH" height="'+heights+'px" width="100%"></iframe>'
+                    ,id: id
+                });
+            } else {
+                $(`#${id}`).attr('src', $(`#${id}`).attr('src'));
+            }
+            element.tabChange('tabs', id);
+            $('.treeview-menu > li').removeClass("active");
+            $(this).parent().addClass("active");
+        })
+
+        var height;
+        $(function(){
+            changeHeight();
+        });
+        //当浏览器大小变化时
+        $(window).resize(function () {          
+            changeHeight();
+        });
+
+        function changeHeight(){
+            var headerH = $('header.top-header-area').height();
+            var footerH = $('footer.footer-area').height();
+            height = document.documentElement.clientHeight - (headerH+footerH+40+4);
+            $('.main-content').height(height);
+            $('.iframeH').height(height-62);
+        }
+
+        function editPasswordOpen(){
+            indexPopup = layer.open({
+                type: 1,
+                skin: 'layui-layer-demo', //样式类名
+                closeBtn: 0, //不显示关闭按钮
+                title: '修改密码',
+                anim: 2,
+                area: ['500px', '320px'],
+                shadeClose: false, //开启遮罩关闭
+                content: $("#editPasswordPopup")
+            });
+        }
+
+        function editPassword(){
+            var password = $("#password").val().trim();
+            var newPassword =  $("#newPassword").val().trim();
+            var reNewPassword =  $("#reNewPassword").val().trim();
+            if( password == "" ){
+                layer.msg("原密码不能为空！");
+                return;
+            }
+            if(newPassword == ""){
+                layer.msg("新密码不能为空！");
+                return;
+            }
+            if(newPassword != reNewPassword){
+                layer.msg("新密码和确认新密码不一致！");
+                return;
+            }
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url:"/admin/editPassword",
+                type:"POST",
+                data:{
+                    password:$.md5(password),
+                    newPassword:$.md5(newPassword),
+                    _csrf:$("#_csrf").val()
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg('修改密码成功,请重新登录！');
+                        closePopup();
+                        setTimeout(function(){
+                            window.location.href = "/login";
+                        },2000)
+                    }else{
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#password").val("");
+            $("#newPassword").val("");
+            $("#reNewPassword").val("");
+        }
+
+        // ----------------------------
+
+        // 隐藏右键菜单
+        function hideMenu() {
+            $('#appMenu').css('display', 'none');
+        }
+    </script>    
+</body>
+
+</html>

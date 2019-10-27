@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>KK棋牌后台管理系统</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/public/admin/img/favicon.ico">
+    <link rel="stylesheet" href="/public/admin/css/login.css">
+</head>
+
+<body>
+   
+    <div class="login-bg-plain stain">
+        <input type="hidden" id="_csrf" value="<%=csrf%>">
+        <div class="form-basic" id="login">
+            <div class="form-content">
+                <div class="login-header">
+                    <div class="logo" style="width: 300Px">
+                        <span class="color">KK棋牌后台管理系统</span>
+                     </div>
+                </div>
+                <form name="loginform"  class="layui-form" onsubmit="return false">			
+                    <table class="layui-table">
+                        <tr>
+                            <td>
+                                <img class="user" src="/public/admin/img/user.png" style="position: absolute;    margin: 1% 1%;"/>
+                                <input type="text"  id="username" placeholder="请输入账号" tabindex="1">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img class="password"src="/public/admin/img/password.png" style="position: absolute;    margin: 1% 1%;"/>
+                                <input type="password" id="password" placeholder="请输入密码" tabindex="2">
+                            </td>
+                        </tr>
+                        <input type="hidden" id="verif_num" value="<%= verifNum %>">
+                        <tr id="yzm_tr">
+                            <td>
+                                <img class="password"src="/public/admin/img/password.png" style="position: absolute;    margin: 1% 1%;"/>
+                                <input type="text" id="verif_code" placeholder="请输入验证码" tabindex="1">
+                                <a href="javascript:;" id = "yzm" style="position: absolute;    margin-left: 1% ;" ></a>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="width: 50px;">
+                                <input type="checkbox" style="width: 30px;" id="remember"/>
+                                <label style="position: relative;top: -20px;left: 30px;">记住密码</label>
+                            </td>
+                        </tr>
+                          
+                        <tr>
+                            <td style="text-align: center;">
+                                <input type="submit" id="submit" class="login-btn" value="登录" tabindex="4" />
+                            </td>
+                        </tr>
+                       
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Must needed plugins to the run this template -->
+    <script src="/public/admin/js/jquery.min.js"></script>
+    <script src="/public/admin/js/md5.js"></script>
+    <!-- layui -->
+    <script src="/public/admin/static/layui/layui.js"></script>
+
+    <script>
+        var layer;
+        $(function() {
+            layui.use(['form','layer'], function(){
+                layer = layui.layer;
+                var form = layui.form;    
+            });
+            init();
+            submit();
+        });
+
+        function init() {
+            var arrStr = document.cookie.split("; ");
+            for(var i = 0;i < arrStr.length;i ++) {
+                var temp = arrStr[i].split("=");
+                if(temp[0] === 'username') {
+                    $('#username').val(temp[1]);
+                }
+                if(temp[0] === 'password') {
+                    $('#password').val(temp[1]);
+                    $('#remember').attr('checked', true);
+                }
+            }
+            // dq
+            if($("#verif_num").val() == 0 ){
+                $("#yzm_tr").hide();
+            } else {
+                $("#login").height(470);
+            }
+           
+            $("#yzm").click(function(){
+                initVerifCode();
+            })
+            initVerifCode();
+        }
+        
+        function initVerifCode(){
+            $.ajax({
+                url:"/verifCode?t="+Math.random(),
+                type:"GET",
+                success:function(data){
+                    $("#yzm").empty().html(data);
+                }
+            })
+        }
+       
+        function submit() {
+            $('#submit').click(function() {
+            var username = $("#username").val().trim();
+            var password = $("#password").val().trim();
+            var verifNum = $("#verif_num").val().trim();
+            var verifCode = $("#verif_code").val().trim();
+            
+            if( username == ""){
+                layer.msg('账号不能为空！');
+                return;
+            }
+
+            if( password == ""){
+                layer.msg('账号密码不能为空！');
+                return;
+            }
+
+            if(verifNum != 0 && verifCode == ""){
+                layer.msg('验证码不能为空！');
+                return;
+            }
+            $("#submit").val("登录中.");
+            var index = layer.load(1, {
+                shade: [0.1,'#fff'] //0.1透明度的白色背景
+            });
+            if ($('#remember')[0].checked) {
+                let date = new Date();
+                let ms = 30*24*60*60*1000;
+                date.setTime(date.getTime() + ms);
+                let str = `password=${escape(password)};expires=${date.toGMTString()}`;
+                document.cookie = str;
+            } else {
+                let date = new Date();
+                date.setTime(date.getTime() - 1);
+                let str = `password=${escape(password)};expires=${date.toGMTString()}`;
+                document.cookie = str;
+            }
+            $.ajax({
+                url:"/doLogin",
+                type:"POST",
+                data:{
+                    username:username,
+                    password:$.md5(password),
+                    verifCode:verifCode,
+                    _csrf:$("#_csrf").val()},
+                timeout:60000, //1分钟
+                success:function(data){
+                    $("#submit").val("登录");
+                    layer.close(index);
+                    if(data.status == 0){
+                        layer.msg("登录成功");
+                        setTimeout(function(){
+                            window.location.href = "/";
+                        },1000)
+                        let date = new Date();
+                        let ms = 30*24*60*60*1000;
+                        date.setTime(date.getTime() + ms);
+                        let str = `username=${escape(username)};expires=${date.toGMTString()}`;
+                        document.cookie = str;
+                        // console.log(document.cookie);
+                    }else{
+                        //  dq
+                        $("#yzm_tr").show();
+                        $("#verif_code").val("");
+                        $("#verif_num").val(data.verifNum);
+                        $("#login").height(470);
+                        initVerifCode();
+                        layer.msg( data.msg || '操作失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    $("#submit").val("登录");
+                    console.log("[ERROR] - ",error);
+                    layer.close(index);
+                }
+            })
+        })
+    }
+            
+
+    </script>    
+</body>
+
+</html>

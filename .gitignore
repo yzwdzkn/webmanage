@@ -1,0 +1,16 @@
+logs/
+node_modules/
+package-lock.json
+yarn.lock
+coverage/
+.idea/
+run/
+typings/
+.nyc_output/
+app/public/swagger
+app/public/admin/upload/
+app/schedule/scheduleDay.js
+app/schedule/schedule1hour.js
+
+
+app/public/admin/js/moment.js

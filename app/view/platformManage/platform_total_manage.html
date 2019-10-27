@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+    <style type="text/css">
+        a {
+            color:rgb(100, 155, 18);
+            cursor:pointer;
+        }
+        a:hover {
+            color: aqua;
+        }
+    </style>
+</head>
+<body>
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>
+                <div class="layui-row">
+                    <div class="layui-form layui-col-md12" style="text-align: right">
+                            <div class="layui-input-inline" style="text-align: left">
+                                <select id="s_platform_id" lay-filter="s_platform_id">
+                                    <option value="" selected="">所有平台</option>
+                                    <% platforms.forEach(function(item) { %>
+                                    <option value="<%= item.platform_id%>"><%=item.platform_id %> -- <%= item.platform_name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        <div class="layui-input-inline" style="width: 120px;">
+                            <input type="text" id="start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                        </div>
+                        <div class="layui-input-inline" >
+                            <span>-</span>
+                        </div>
+                      
+                        <div class="layui-input-inline" style="width: 120px;">
+                            <input type="text" id="end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                        </div>
+                            <!-- <div class="layui-input-inline" style="width: 180px;">
+                                <input type="text" id="e_platform_id"  placeholder="平台ID" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-input-inline" style="width: 180px;">
+                                <input type="text" id="e_platform_name"  placeholder="平台名称" autocomplete="off" class="layui-input">
+                            </div> -->
+                        
+                        <div class="layui-input-inline btm_width_140">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                            <button type="button" class="layui-btn" id="clear">重置</button>
+                            <button type="button" class="layui-btn" id="export">导出</button>
+                        </div>
+                </div>
+                
+            </div>
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+
+</body>
+    <div class="popup" id="popupDetail">
+        <table class="layui-hide" id="tables1" lay-filter="table1"></table>
+    </div>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+
+<!--clipboard-->
+<script src="/public/admin/js/clipboard.min.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ;
+        let totalData;
+        
+        $(function(){
+            layui.use(['element','form','layer','table','laydate'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                var laydate = layui.laydate;
+
+                laydate.render({
+                    elem: '#start_date',
+                    format: 'yyyy-MM-dd',
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    format: 'yyyy-MM-dd',
+                });
+                var date = new Date();
+                $("#start_date").val(date.getFullYear() + "-" + (date.getMonth()+1 ) + "-01");
+                $("#end_date").val(getBeforeDate(0));
+
+                initData();
+                table.on('sort',function(obj) {
+                    console.log(obj.field); //当前排序的字段名
+                    console.log(obj.type); //当前排序类型：desc（降序）、asc（升序）、null（空对象，默认排序）
+                    console.log(obj); //当前排序的 th 对象
+                });
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+
+            $("#clear").click(function() {
+            $("#s_platform_id").val("0")
+            // $("#e_platform_name").val("")
+            // $("#e_platform_id").val("")
+
+            form.render()
+        })
+
+            // 导出
+            $("#export").click(function() {
+                let data = {
+                    order_state:$("#order_state").val(),
+                    start_date: $("#start_date").val(),
+                    end_date: $("#end_date").val(),
+                    type: $("#type").val(),
+                    order_id: $("#order_id").val(),
+                    platform_id: $("#s_platform_id").val(),
+                    _csrf:$("#_csrf").val()
+                };
+                let url = '/admin/platformManage/platformTotalManage/export';
+                let xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            let blob = this.response; //使用response作为返回，而非responseText
+                            let reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            let a = document.createElement("a");
+                            a.download = "平台账单结算.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            });
+
+        })
+
+        function initData() {
+            var game_id = $("#s_game_id").val();
+            let total_score = 0;
+            let win_score = 0;
+            let sent_score = 0;
+            let gold = 0;
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            table.render({
+                elem: '#tables',
+                title: '平台账单结算 ', //导出数据时的文件名
+                url:'/admin/platformManage/platformTotalManage/list',
+                where:{
+                    // e_platform_id:$("#e_platform_id").val(),
+                    // e_platform_name:$("#e_platform_name").val(),
+                    start_date:$("#start_date").val(),
+                    end_date:$("#end_date").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'date', title: '时间', align:'center',sort: true,width:180},
+                    // {field:'platform_id', title: '平台ID', align:'center',sort: true,},
+                    {field:'platform_name', title: '平台名称', align:'center',sort: true,   templet: function(row){
+                        return row.platform_id+'--'+row.platform_name;
+                    }
+                },
+                    {field:'add_score', title: '交易金额', align:'center',
+                        templet: function(row){
+                            let money = (parseFloat(row.current / 100).toFixed(2) - parseFloat(row.pre / 100).toFixed(2)).toFixed(2) || 0;
+                            total_score += parseFloat(money);
+                            return  parseFloat(money) > 0 ? "<span style = 'color:green'>"+ money + "</span>":"<span style = 'color:red'>"+ money + "</span>";
+                        }
+                    },
+                    {field:'pre', title: '账前金额', align:'center',
+                        templet: function(row){
+                            let res = parseFloat(row.pre / 100).toFixed(2) || 0;
+                            return res;
+                        }
+                    },
+                    {field:'current', title: '账后金额', align:'center',
+                        templet: function(row){
+                            let res = parseFloat(row.current / 100).toFixed(2);
+                            return res;
+                        }
+                    },
+                    {field:'rate', title: '分成比例',align:'center',sort: true,
+                        templet: function(row){
+                            if (row.status == 1) {
+                                return row.rate + '%'
+                            } else {
+                                return row.platRate + '%'
+                            }
+                        }
+                    },
+                    {field:'platform_gold', title: '平台盈利',align:'center',sort: true,
+                        templet: function(row){
+                            if(row.date=='汇总') {
+                            return '-'
+                        }
+                        const res =  ((row.lost_gold -  row.win_gold + row.deduct_gold)/100);
+                        win_score += res;
+                        return res.toFixed(2);
+                        }
+                    },
+                    {field:'gold', title: '交收金额',align:'center',sort: true, templet: function(row) {
+                        if(row.date=='汇总') {
+                            return '-'
+                        }
+                        let lost_win =  ((row.lost_gold -  row.win_gold + row.deduct_gold)/100)
+                        if (lost_win <= 0) {
+                            return '0'
+                        }
+                        if (row.status == 1) {
+                            return (row.rate * lost_win /100).toFixed(2) || '-'
+                        }
+                        return (row.platRate * lost_win /100).toFixed(2) || '-'
+                    }},
+                    {field:'status', title: '交收状态',align:'center',sort: true,
+                        templet: function(row){
+                            if(row.status == 1) {
+                                return '已交收'
+                            } else if(row.status == 0) {
+                                return '未交收'
+                            } else {
+                                return '-'
+                            }
+                        }
+                    },
+                    {field:'details', title: '操作', align:'center',width:150,
+                        templet:function(row){
+                            row.platform_id = row.platform_id?row.platform_id:-1;
+                            let = result = "<button type='button' class='layui-btn layui-btn-xs layui-btn-primary editUser' onclick=\"popupDetail("+row.platform_id + ",'"+ row.date +"')\">明细</button>"
+                            if(row.status == 1) {
+                                result += `<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick="settlement('${row.date}','${row.platform_id}','${row.platRate}','0')"">取消交收</button>`;
+                            } else if(row.status == 0) {
+                                result += `<button type='button' class='layui-btn layui-btn-xs layui-btn-primary' onclick="settlement('${row.date}','${row.platform_id}','${row.platRate}','1')"">交收</button>`;
+                            }
+                            return result;
+                        },
+                    }
+                ]],
+                done: function(res) {
+                    // console.log($('.layui-table-header table')[0]);
+                    var k = $('#total').find('td:first').text()
+                    if (k=='汇总') {
+                        $('#total').remove()
+                    }
+                    // dq 10-15
+                    $('.layui-table-header table').append( 
+                        `<tbody style='text-align:center;'>
+                            <tr id='total'>
+                                <td>汇总</td>
+                                <td>-</td>
+                                <td>${total_score.toFixed(2)}</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>${win_score.toFixed(2)}</td>
+                                <td>-</td>
+                                <td>${sent_score.toFixed(2)}</td>
+                                <td><button type='button' class='layui-btn layui-btn-xs layui-btn-primary editUser' onclick="settlementAll()">全部交收</button></td>
+                            </tr>
+                        <tbody>
+                        `);
+                    totalData = res.data;
+                    var e = $(".layui-table-header .layui-table tr:first-child");
+                    e.css("font-weight","bold");
+                    total_score = 0;
+                    win_score = 0;
+                    sent_score = 0;
+                    gold = 0;
+                }
+            });
+        }
+
+        function popupDetail(platform_id,one_day){
+            let start =$("#start_date").val();
+            let end = $("#end_date").val();
+            order_time = start + "," + end; 
+            // initData1(platform_id,order_time,one_day);
+            indexPopup = layer.open({
+                    type: 2,
+                    skin: 'layui-layer-demo', //样式类名
+                    closeBtn: 1, //显示关闭按钮1
+                    cancel: function(index, layero){
+                        layer.close(indexPopup)
+                    },
+                    title: '平台账单明细',
+                    anim: 2,
+                    area: ['100%', '100%'],
+                    shadeClose: false, //开启遮罩关闭
+                    content: `/admin/platformManage/platformOrderManage?platform_id=${platform_id}&date=${one_day}`
+                });
+        }
+
+        // 全部交收
+        function settlementAll () {
+            layer.confirm("点击确定将交收全部账单！", {
+                btn: ['确定','取消'] //按钮
+            }, function() {
+                let datas = [];
+                var curDate = getNowFormatDate()
+                for(const data of totalData) {
+                    if (data.status == 0 && curDate!= data.date) {
+                        datas.push({
+                            date: data.date,
+                            platform_id: data.platform_id,
+                            rate: data.platRate,
+                        });
+                    }
+                }
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                console.log("datas:",datas);
+                if(datas.length == 0){
+                    layer.msg('没有要交收的数据!');
+                    return;
+                }
+                $.ajax({
+                    url:"/admin/platformManage/platformHistoryData/changeStatusAll",
+                    type:"POST",
+                    data:{ data: datas,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0) {
+                            layer.msg('交收成功!');
+                            initData()
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function settlement(date, platform, rate, status) {
+            // var rate = platform_info.rate
+            // console.log('#########: ', platform_info)
+            layer.confirm("是否确认交收<span style='color:red'> 平台id:"+ platform + "#日期: " + date +" </span>这条数据？", {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                var curDate = getNowFormatDate()
+                if (curDate == date) {
+                    layer.msg('今日账单不可交收')
+                    return
+                }
+                var index = layer.load(1, {
+                    shade: [0.1,'#fff'] //0.1透明度的白色背景
+                });
+                $.ajax({
+                    url:"/admin/platformManage/platformHistoryData/changeStatus",
+                    type:"POST",
+                    data:{date,platform_id:platform,rate,status,_csrf:$("#_csrf").val()},
+                    timeout:60000, //1分钟
+                    success:function(data){
+                        layer.close(index);
+                        if(data.status == 0) {
+                            if(status == 0){
+                                layer.msg('取消成功!');
+                            }else{
+                                layer.msg('交收成功!');
+                            }
+                            initData()
+                        }else{
+                            layer.msg( data.msg || '操作失败');
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.log("[ERROR] - ",error);
+                        layer.close(index);
+                    }
+                })
+            }, function(){
+            });
+        }
+
+        function initData1(platform_id,order_time,one_day){
+            var game_id = $("#s_game_id").val();
+            table.render({
+                elem: '#tables1',
+                title: '平台账变明细 ', //导出数据时的文件名
+                url:'/admin/platformManage/platformOrderManage/list',
+                where:{
+                    order_time:order_time,
+                    one_day:one_day,
+                    platform_id:platform_id,
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                cols: [[
+                    {field:'order_time', title: '时间', align:'center',sort: true,width:180},
+                    {field:'order_id', title: '订单号', align:'center',sort: true,width:230,
+                        templet: function(row) {
+                            return `<a onclick='copyOrderId("${row.order_id}")' id='${row.order_id}'>${row.order_id}</a>`;
+                        }
+                    },
+                    {field:'platform_id', title: '平台ID', align:'center',sort: true,},
+                    {field:'type', title: '交易类型', align:'center',sort: true,
+                        templet: function(row){
+                            if(row.type == 0){
+                                return "会员上分"
+                            }else if(row.type == 1){
+                                return "会员下分"
+                            }else if(row.type == 2){
+                                return "后台上分"
+                            }else if(row.type == 3){
+                                return "后台下分"
+                            }else if(row.type == 4){
+                                return "平台下分失败"
+                            }else if(row.type == 5){
+                                return "平台上分失败"
+                            }else if(row.type == 6){
+                                return "回滚平台分数失败"
+                            }else if(row.type == 7){
+                                return "回滚平台分数成功"
+                            } else if(row.type == 8) {
+                                return '代理充值'
+                            } else if(row.type ==9) {
+                                return '代理取款'
+                            }
+                        }
+                    },
+                    {field:'add_score', title: '交易金额', align:'center',
+                        templet: function(row){
+                        if( row.type == 0 || row.type == 3 || row.type == 4 || row.type == 8){
+                            return parseFloat(row.add_score / -100).toFixed(2);
+                        }else if(row.type == 1 || row.type == 2 || row.type == 5){
+                            return parseFloat(row.add_score / 100).toFixed(2);
+                        }else{
+                            return parseFloat(row.add_score / 100).toFixed(2);
+                        }
+                        }
+                    },
+                    {field:'pre_score', title: '账前金额', align:'center',
+                        templet: function(row){
+                        return parseFloat(row.pre_score / 100).toFixed(2);
+                        }
+                    },
+                    {field:'current_score', title: '账后金额', align:'center',
+                    templet: function(row){
+                            return parseFloat(row.current_score / 100).toFixed(2);
+                        }
+                    },
+                    {field:'order_state', title: '处理状态', align:'center',sort: true,
+                        templet: function(row){
+                            if(row.order_state == 1){
+                                return "处理中"
+                            }else if(row.order_state == 2){
+                                return "处理完成"
+                            }else{
+                            return "-"
+                            }
+                        }
+                    },
+                        // {field:'ip', title: 'IP', align:'center'},
+                    {field:'create_operator', title: '操作人', align:'center'},
+                ]]
+            });
+        }
+
+        function copyOrderId(orderId) {
+           document.addEventListener('copy', save);
+           document.execCommand('copy');
+           document.removeEventListener('copy', save);
+           function save(e) {
+            e.clipboardData.setData('text/plain', orderId);
+            e.preventDefault();
+           }
+           layer.msg('复制成功');
+        }
+
+        function getNowFormatDate() { // 获取今日日期格式'YYYY-MM-DD'
+            var date = new Date();
+            var seperator1 = "-";
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var strDate = date.getDate();
+            if (month >= 1 && month <= 9) {
+                month = "0" + month;
+            }
+            if (strDate >= 0 && strDate <= 9) {
+                strDate = "0" + strDate;
+            }
+            var currentdate = year + seperator1 + month + seperator1 + strDate;
+            return currentdate;
+        }
+          /**
+         *  计算前N天的时间
+         */
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+
+    </script>      
+</html>

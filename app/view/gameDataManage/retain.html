@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px;">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div style="text-align: right" class="layui-form  row">
+                <div class="layui-input-inline" style="text-align: left">
+                    <select id="s_platform_id" lay-filter="s_platform_id">
+                        <option value="" selected="">所有平台</option>
+                        <% platforms.forEach(function(item) { %>
+                            <option value="<%= item.platform_id%>"><%=item.platform_id %> -- <%= item.platform_name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <input type="text" name="date" id="start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-input-inline" style="padding-bottom: 10px;">
+                    <span>-</span>
+                </div>
+               
+                <div class="layui-input-inline" >
+                    <input type="text" name="date" id="end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-input-inline btm_width_140">
+                        <button type="button" class="layui-btn" id="search">搜索</button>
+                        <button type="button" class="layui-btn" id="export">导出</button>
+                </div>
+            </div>
+            <div>
+                <div class="layui-inline">             
+                    <div class="layui-input-inline" style="margin-left: -50px; width: 700px;">
+                        <label class="layui-form-label" style="font-weight: bold;width: 470px;">
+                                <i class="ti-help-alt" id='help'></i> <span style="color:rgb(255, 34, 34)">总留存:  <%= total%>%</span>
+                                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <i class="ti-help-alt" id='helpLogin'></i> <span style="color:rgb(255, 34, 34)">今日登录人数:  <%= todayLogin%></span>
+                                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <i class="ti-help-alt" id='helpBet'></i> <span style="color:rgb(255, 34, 34)">今日活跃人数:  <%= bet_number%></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables"></table>
+        </div>
+        <div id ='test' style="display: none;">
+
+        </div>
+    </div>
+
+    
+
+    
+</body>
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var layer , table,tableObj,exportData,indexOpen;
+        const exportData2 = [];
+        $(function(){
+            layui.use(['element','layer','laydate','table'], function(){
+                var element = layui.element;
+                var laydate = layui.laydate;
+                table = layui.table;
+                layer = layui.layer;
+                laydate.render({
+                    elem: '#start_date',
+                    format: 'yyyy-MM-dd'
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    format: 'yyyy-MM-dd'
+                });
+                var start_date = getBeforeDate(7);
+                var end_date = getBeforeDate(0);
+                $("#start_date").val(start_date);
+                $("#end_date").val(end_date);
+                initData();
+
+                $("#export").click(function(){
+                    let platformId = $("#s_platform_id option[selected]").text();
+                    let start_date = $("#start_date").val();
+                    let end_date = $("#end_date").val();
+                    const head = ['注册时间', '新增用户', '登陆人数', '活跃人数', '总留存', '1日留存', '2日留存', '3日留存', '5日留存', '7日留存', '15日留存', '30日留存'];
+                    let tableX = $('<table lay-filter="tableX" id="tableX" ></table>');
+                    let thead = $(` 
+                    <thead>
+                        <tr>
+                            <th colpan='1' lay-data="{field:'0'}">平台：${platformId || ''}</th>
+                            <th colpan='2' lay-data="{field:'1'}">开始时间：${start_date}</th>
+                            <th colpan='2' lay-data="{field:'11'}">结束时间：${end_date}</th>
+                            <th lay-data="{field:'2'}"></th>
+                            <th lay-data="{field:'3'}"></th>
+                            <th lay-data="{field:'4'}"></th>
+                            <th lay-data="{field:'5'}"></th>
+                            <th lay-data="{field:'6'}"></th>
+                            <th lay-data="{field:'7'}"></th>
+                            <th lay-data="{field:'8'}"></th>
+                            <th lay-data="{field:'9'}"></th>
+                            <th lay-data="{field:'10'}"></th>
+                        </tr>
+                    </thead>`);
+                    let tbody = $('<tbody></tbody>');
+                    let htr = $('<tr></tr>');
+                    for (let i = 0; i < head.length; i ++) {
+                        const h = head[i];
+                        htr.append(`<td lay-data="{field:'${i}'}">${h}</td>`);
+                    }
+                    tbody.append(htr);
+                    for (const data of exportData2) {
+                        let btr = $('<tr></tr>');
+                        for (const d of data) {
+                            btr.append(`<td>${d}</td>`);
+                        }
+                        tbody.append(btr);
+                    }
+                    tableX.append(thead);
+                    tableX.append(tbody);
+                    $('#test').append(tableX);
+                    table.config.title = '会员留存';
+                    const exportTable = table.init('tableX');
+                    table.exportFile('tableX', null, 'xls');
+                })
+            });
+
+            $("#search").click(function(){
+                initData();
+            })
+            // $("#export").click(function() {
+            //     let platformId = $("#s_platform_id").val();
+            //     let start_date = $("#start_date").val();
+            //     let end_date = $("#end_date").val();
+            //     table.exportFile([`平台：${platformId}`, `开始时间：${start_date}`, `结束时间：${end_date}`],[['注册时间', '新增用户', '登陆人数', '活跃人数', '总留存', '1日留存', '2日留存', '3日留存', '5日留存', '7日留存', '15日留存', '30日留存']].concat(exportData2), 'xls');
+            // })
+
+            $("#help").mouseover(function () {
+                indexOpen = layer.tips("总留存：从平台开始运营到昨天的所有注册会员在今天登陆的比例", '#help',{
+                    tips:1
+                });
+            })
+
+            $("#help").mouseout(function () {
+                layer.close(indexOpen)
+            })
+
+            $("#helpLogin").mouseover(function () {
+                indexOpen = layer.tips("今日登录人数：今天登录过的会员总数", '#helpLogin',{
+                    tips:1
+                });
+            })
+
+            $("#helpLogin").mouseout(function () {
+                layer.close(indexOpen)
+            })
+
+            $("#helpBet").mouseover(function () {
+                indexOpen = layer.tips("今日活跃人数：今日下注过的会员总数", '#helpBet',{
+                    tips:1
+                });
+            })
+
+            $("#helpBet").mouseout(function () {
+                layer.close(indexOpen)
+            })
+        })
+
+
+
+        function initData(){
+           let line = [];
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            tableObj = table.render({
+                elem: '#tables',
+                title: '会员留存', //导出数据时的文件名
+                url:'/admin/gameDataManage/retain/list',
+                where:{
+                    'platformId':$("#s_platform_id").val(),
+                    'start_date':start_date,
+                    'end_date':end_date,
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:false,
+                cols: [[
+                    {field:'first_day', title: '注册时间',sort: true,align:'center',
+                        templet: function(row) {
+                            line.push(row.first_day.toString());
+                            return row.first_day;
+                        },
+                    },
+                    {field:'day_0', title: '新增用户', sort: true,align:'center',
+                        templet: function(row) {
+                            line.push(row.day_0.toString());
+                            return row.day_0;
+                        },
+                    },
+                    {field:'login_count', title: '登录人数', sort: true,align:'center',
+                        templet: function(row) {
+                            line.push(row.login_count.toString());
+                            return row.login_count;
+                        },
+                    },
+                    {field:'bet_number', title: '活跃人数', sort: true,align:'center',
+                        templet: function(row) {
+                            line.push(row.bet_number.toString());
+                            return row.bet_number;
+                        },
+                    },
+                    {field:'retain_all', title: '总留存', sort: true,align:'center',
+                        templet: function(row) {
+                            line.push(row.retain_all.toString());
+                            return row.retain_all;
+                        },
+                    },
+                    {field:'day_1',  title: '1日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 1){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_1 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;
+                        }
+                    },
+                    {field:'day_2', title: '2日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 2){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_2 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;
+                        }
+                    },
+                    {field:'day_3', title: '3日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 3){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_3 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;
+                        }
+                    },
+                    {field:'day_5', title: '5日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 5){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_5 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;
+                        }
+                    },
+                    {field:'day_7', title: '7日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 7){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_7 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;
+                        }
+                    },
+                    {field:'day_15', title: '15日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 15){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_15 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            return rowData;         
+                        }
+                    },
+                    {field:'day_30', title: '30日留存',align:'center',
+                        templet: function(row){
+                            let rowData = '';
+                            if( DateDiff(row.first_day,end_date) >= 30){
+                                rowData =  row.day_0 !=0 ? (parseFloat(row.day_30 / row.day_0) * 100).toFixed(2) + "%" : "0%";
+                                line.push(rowData.toString());
+                                exportData2.push(line);
+                                line = [];
+                                return rowData;
+                            }
+                            line.push(rowData.toString());
+                            exportData2.push(line);
+                            line = [];
+                            return rowData;
+                        }
+                    }
+                ]],
+                done: function (res, curr, count) {
+                    exportData=res.data;
+                }
+            });         
+        }
+
+        /**
+         *  计算前N天的时间
+         */
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+
+        /**
+         * 计算2个时间相差多少天
+         */
+        function  DateDiff(sDate1,  sDate2){  
+            var  aDate,  oDate1,  oDate2,  iDays;
+            aDate  =  sDate1.split("-");
+            oDate1  =  new  Date(aDate[1]  +  '-'  +  aDate[2]  +  '-'  +  aDate[0]);
+            aDate  =  sDate2.split("-");
+            oDate2  =  new  Date(aDate[1]  +  '-'  +  aDate[2]  +  '-'  +  aDate[0]);
+            iDays  =  parseInt(Math.abs(oDate1  -  oDate2)  /  1000  /  60  /  60  /24);
+            return  iDays;
+        }    
+
+    </script>      
+</html>

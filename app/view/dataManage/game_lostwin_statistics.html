@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+</head>
+<body>
+    <div class="layui-card">
+            <div class="card-header" >
+              <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+                <i class="ti-help-alt"></i>
+            </div>
+            <div class="layui-form" style="text-align: right">
+                <div class="layui-row">
+                    <div class="layui-inline" style="text-align: left">
+                        <div class="layui-input-inline"style=" width: 180px;margin-left: 5px; display:none">
+                            <select id="s_agent_id">
+                                <option value="0" selected="">所有代理</option>
+                                <% agents.forEach(function(item){%>
+                                <option value="<%=item.id %>" ><%=item.username %></option>   
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                            <select id="s_game_id" lay-filter="s_game_id">
+                                <option value="0" selected="">所有游戏</option>
+                                <% gameData.forEach(function(item){%>
+                                <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                            <select id="s_room_id" >
+                                <option value="0" selected="">所有房间</option>
+                            </select>
+                        </div>
+                </div>
+                                        
+                    <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                        <input type="text" name="date" id="start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                    </div>
+                                            
+                    <div class="layui-input-inline" style="padding-bottom: 10px;">
+                        <span>-</span>
+                    </div>
+                                                
+                    <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                        <input type="text" name="date" id="end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                    </div>
+                                                    
+                    <div class="layui-input-inline btm_width_210">
+                        <button type="button" class="layui-btn" id="search">搜索</button>
+                        <button type="button" class="layui-btn" id="clear">重置</button>
+                        <button type="button" class="layui-btn" id="export">导出</button>
+                    </div>
+                </div>
+            </div>
+           
+            <input type="hidden" id="_csrf" value="<%=csrf%>">
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-hide" id="tables" lay-filter="tables"></table>
+        </div>
+    </div>
+
+
+    
+</body>
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var layer ,form, table,tableObj,exportData;
+        $(function(){
+            layui.use(['element','layer','laydate','table','form'], function(){
+                var element = layui.element;
+                var laydate = layui.laydate;
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                laydate.render({
+                    elem: '#start_date',
+                    format: 'yyyy-MM-dd'
+                });
+                laydate.render({
+                    elem: '#end_date',
+                    format: 'yyyy-MM-dd'
+                });
+                var start_date = getBeforeDate(7);
+                var date = getBeforeDate(0);
+                $("#start_date").val(start_date);
+                $("#end_date").val(date);
+
+                form.on('select(s_game_id)', function(data){   
+                    var game_id = data.value;
+                    console.log("game_id:",game_id);
+                    $.ajax({
+                        url:"/admin/dataManage/gameLostwinStatistics/findRoom",
+                        type:"POST",
+                        data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                        timeout:60000, //1分钟
+                        success:function(data){
+                            $("#s_room_id").empty().append('<option value="0" selected="">所有房间</option>');
+                            for (var i = 0; i < data.rooms.length; i++) {
+                                $("#s_room_id").append('<option value="'+data.rooms[i].room_id+'">'+data.rooms[i].room_name+'</option>');
+                            }
+                            form.render('select'); 
+                        },
+                        error: function(xhr, status, error){
+                            console.log("[ERROR] - ",error);
+                        }
+                    })
+                });
+
+                table.on('sort(tables)', function(obj){ //注：tables是table原始容器的属性 lay-filter="对应的值"
+                    //尽管我们的 table 自带排序功能，但并没有请求服务端。
+                    //有些时候，你可能需要根据当前排序的字段，重新向服务端发送请求，从而实现服务端排序，如：
+                    orderField = obj.field;
+                    orderType = obj.type;
+                    table.reload('tables', {
+                        initSort: obj, //记录初始排序，如果不设的话，将无法标记表头的排序状态。 layui 2.1.1 新增参数
+                        where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
+                            orderField:orderField, //排序字段   在接口作为参数字段  field order
+                            orderType: orderType //排序方式   在接口作为参数字段  field order
+                        }
+                    });
+                });
+
+                initData();
+            });
+
+            $("#search").click(function(){
+                initData();
+                // reloadTable();
+            })
+            $("#export").click(function(){
+                let game_name = $("#s_game_id").find(`option[value=${$("#s_game_id").val()}]`).text()
+                let room_name = $("#s_room_id").find(`option[value=${$("#s_room_id").val()}]`).text()
+
+                console.log(game_name)
+                // table.exportFile(tableObj.config.id,exportData, 'xls');
+                let data = {
+                    start_date : $("#start_date").val(),
+                    end_date : $("#end_date").val(),
+                    agent_id: $("#s_agent_id").val(),
+                    game_id: $("#s_game_id").val(),
+                    room_id: $("#s_room_id").val(),
+                    game_name,
+                    room_name,
+                    _csrf:$("#_csrf").val()
+                };
+                let url = '/admin/dataManage/gameLostwinStatistics/export';
+                let xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            let blob = this.response; //使用response作为返回，而非responseText
+                            let reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            let a = document.createElement("a");
+                            a.download = "游戏输赢统计.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            })
+        })
+
+        function initData(){
+           
+            var start_date = $("#start_date").val();
+            var end_date = $("#end_date").val();
+            tableObj = table.render({
+                elem: '#tables',
+                sort:true,
+                title: '游戏输赢统计', //导出数据时的文件名
+                url:'/admin/dataManage/gameLostwinStatistics/list',
+                even: true, // 表格条纹
+                where:{
+                   agent_id: $("#s_agent_id").val(),
+                   game_id: $("#s_game_id").val(),
+                   room_id: $("#s_room_id").val(),
+                   start_date:start_date,
+                   end_date:end_date,
+                  _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:false,
+                cols: [[
+                    {field:'game_name', title: '游戏名称',align:"center",
+                      templet: function(row){
+                        return row.game_info.game_name;
+                      }
+                    },
+                    {field:'room_id', title: '房间ID',align:"center",sort: true},
+                    {field:'lostWin', title: '房间总盈利',align:"center", sort: true,
+                      templet: function(row){
+                        return row.lostWin>=0?`<span style='color:green'>${(row.lostWin).toFixed(2)}</span>`:`<span style='color:red'>${(row.lostWin).toFixed(2)}</span>`
+                      }
+                    },
+                    {field:'room_kill', title: '房间杀数',align:"center",sort:true,
+                      templet: function(row){
+                        // let money = parseFloat(parseFloat((row.win_gold - row.deduct_gold - row.lost_gold) / -100).toFixed(2))
+                        return row.room_kill>0?`<span style="color:green">${row.room_kill +'%'}</span>`:`<span style="color:red">${row.room_kill +'%'}</span>`;
+                      }
+                    },
+                    {field:'total_games', title: '总局数',align:"center", sort:true},
+                    {field:'win_rate', title: '赢局占比',align:"center",sort:true,
+                      templet: function(row){
+                        return (row.win_games / row.total_games * 100).toFixed(2) + '%'
+                      }
+                    },
+                    {field:'bet_number',  title: '投注人数',align:"center",
+                      templet: function(row){
+                        return  parseFloat(row.bet_number) || 0;
+                      }
+                    },
+                    {field:'avg_bet',  title: '人均投注',align:"center",
+                      templet: function(row){
+                        return  parseFloat((row.valid_bet / 100 / row.bet_number).toFixed(2))
+                      }
+                    },
+                    {field:'avgLostWin', title: '人均输赢',align:"center", sort:true,
+                      templet: function(row){
+                        return row.avgLostWin>=0?`<span style='color:green'>${(row.avgLostWin).toFixed(2)}</span>`:`<span style='color:red'>${row.avgLostWin.toFixed(2)}</span>`
+                      }
+                    },
+                    {field:'avg_duration', title: '人均游戏时长(秒)', width:140,align:"center",
+                      templet: function(row){
+                        return  row.bet_number ? parseFloat((row.duration / row.bet_number).toFixed(0)) : 0;
+                      }
+                    },
+                    {field:'kill_games', title: '追杀局数',sort:true,align:"center",
+                      templet: function(row){
+                        return   row.kill_games || 0;
+                      }
+                    },
+                    {field:'kill_success_rate', title: '追杀成功率',sort:true,align:"center",
+                      templet: function(row){
+                        if(row.kill_games == 0) {
+                          return '0.00%'
+                        }
+                        return    (row.kill_lost_games /  row.kill_games * 100).toFixed(2) + '%' 
+                      }
+                    },
+                    {field:'kill_lost_gold', title: '追杀总金额',sort:true,align:"center",
+                      templet: function(row){
+                        return  row.kill_lost_gold / 100;
+                      }
+                    },
+                    {field:'dive_games', title: '放水局数',sort:true,align:"center"},
+                    {field:'throw_success_rate', title: '放水成功率',sort:true,align:"center",
+                      templet: function(row){
+                        if(row.dive_games == 0) {
+                          return '0.00%'
+                        }
+                        return (row.dive_win_games /  row.dive_games * 100).toFixed(2) + '%'
+                      }
+                    },
+                    {field:'dive_win_gold', title: '放水总金额',sort:true,align:"center", // 放水总金额 == 放水玩家赢走的钱
+                      templet: function(row){
+                        return row.dive_win_games != "0" ? (row.dive_win_gold - row.deduct_gold) / -100 : 0;
+                      }
+                    },
+                ]],
+                done: function (res, curr, count) {
+                    exportData=res.data;
+                }
+            });
+            
+        }
+
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+              agent_id: $("#s_agent_id").val(),
+              game_id: $("#s_game_id").val(),
+              room_id: $("#s_room_id").val(),
+              start_date:start_date,
+              end_date:end_date,
+              _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+
+
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+
+            $("#clear").click(function() {
+            $("#s_agent_id").val('0')
+            $("#s_game_id").val("0")
+            $("#s_room_id").val("0")
+            form.render()
+        })
+
+    </script>      
+</html>

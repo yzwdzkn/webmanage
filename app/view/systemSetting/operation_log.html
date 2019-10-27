@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+    <link rel="stylesheet" href="/public/admin/css/themify-icons.css">
+    
+</head>
+<body>
+    
+        <div class="layui-card">
+            <div class="card-header">
+                <div style="margin: 10px 0px 10px 25px;">
+                    <span class="spanTitle"><%=title%></span>
+                </div>         
+                    <div class="layui-form" style="text-align: right">
+                        <div class="layui-inline" >
+                            <div class="layui-input-block"style=" width:180px;margin-left: 20px;text-align:left;">
+                                <select id="s_type" >
+                                    <option value="">所有操作类型</option>
+                                    <option value="1">更新</option>
+                                    <option value="2">添加</option>
+                                    <option value="3">删除</option>
+                                    <option value="4">恢复</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-input-inline" style="width: 160px;">
+                            <input type="text" id="s_start_time" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                        </div>
+                        <div class="layui-input-inline" >
+                            <span>-</span>
+                        </div>
+                        
+                        <div class="layui-input-inline" style="width: 160px;">
+                            <input type="text" id="s_end_time" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                        </div>
+
+                        
+    
+                        <div class="layui-input-inline" style="width: 250px;margin-left: 5px;">
+                                <input type="text" id="s_operator_name"  placeholder="操作账号" class="layui-input">
+                        </div>
+
+                        <div class="layui-input-inline" style="width: 250px;margin-left: 5px;">
+                                <input type="text" id="s_operated_name"  placeholder="操作对象" class="layui-input">
+                        </div>
+
+                        <div class="layui-input-inline btm_width_70">
+                            <button type="button" class="layui-btn" id="search">搜索</button>
+                        </div>
+                    </div>
+
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+        </div>
+</body>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ;
+        var OPERATION_TYPE = {
+            1:'更新',
+            2:"添加",
+            3:"删除",
+            4:"恢复"
+        }
+        $(function(){
+            layui.use(['element','form','layer','table','laydate'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var element = layui.element;
+                var laydate = layui.laydate;
+                laydate.render({
+                    elem: '#s_start_time',
+                    type:"datetime",
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    // value: new Date(Date.now()-(1000 * 3600))
+                });
+                laydate.render({
+                    elem: '#s_end_time',
+                    type:"datetime",
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    // value: new Date(Date.now()+(1000 * 3600))
+                });
+                const today = new Date();
+                const sevenDaysBefore = new Date(Date.now()-(1000 * 3600*24*7))
+                var start_date = dateFomat(sevenDaysBefore);
+                var date = dateFomat(today);
+
+                $("#s_start_time").val(start_date);
+                $("#s_end_time").val(date);
+                initData();         
+            });
+
+
+            $("#search").click(function(){
+                initData();
+            });
+
+        })
+        function initData(){
+            tableObj = table.render({
+                elem: '#tables',
+                title: '操作日志', //导出数据时的文件名
+                url:'/admin/systemSetting/operationLog/list',
+                where:{
+                    start_time:$("#s_start_time").val(),
+                    end_time: $("#s_end_time").val(),
+                    type: $("#s_type").val(),
+                    operator_name: $("#s_operator_name").val(),
+                    operated_name: $("#s_operated_name").val(), 
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                liimt:10,
+                cols: [[
+                    {field:'id', title: '编号', align:'center',sort: true},
+                    {field:'content', title: '操作内容', align:'center'},
+                    {field:'type', title: '操作类型', align:'center', templet: function(row){
+                            return OPERATION_TYPE[row.type]
+                        }
+                    },
+                    {field:'operator_name',title: `操作账号<i class="ti-help-alt" id='operator_tips'></i>`, align:'center',
+                        templet:function(row){
+                            $("#operator_tips").mouseover(function () {
+                                indexOpen = layer.tips("进行操作的账号", '#operator_tips',{
+                                    tips:1
+                                });
+                            })
+
+                            $("#operator_tips").mouseout(function () {
+                                layer.close(indexOpen)
+                            })
+                            return row.operator_name;
+                        }
+                    },
+                    {field:'operated_name',title: `操作对象<i class="ti-help-alt" id='operated_tips'></i>`, align:'center',
+                        templet:function(row){
+                            $("#operated_tips").mouseover(function () {
+                                indexOpen = layer.tips("被操作的账号", '#operated_tips',{
+                                    tips:1
+                                });
+                            })
+
+                            $("#operated_tips").mouseout(function () {
+                                layer.close(indexOpen)
+                            })
+                            return row.operated_name || '';
+                        }
+                    },
+                    {field:'create_time', title: '操作时间',  align:'center'}
+                ]]
+            });
+        }
+      
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#action").val("");
+            $("#id").val("");
+            $("#name").val("");
+            $("#status input[value='0']").prop("checked",true);
+            $("#type input[value='0']").prop("checked",true);
+            $("#description").val("");
+            form.render('radio');
+        }
+
+        function closeAuthorizationPopup(){
+            layer.close(indexPopup);
+            initTree([]);
+        }
+
+        function dateFomat(date) {
+            let year = date.getFullYear();
+            let mon = date.getMonth() + 1;
+            let day = date.getDate();
+            let hour = date.getHours().toString().padStart(2, 0);
+            let minute = date.getMinutes().toString().padStart(2, 0);
+            let second = date.getSeconds().toString().padStart(2, 0);
+            return `${year}-${mon}-${day} ${hour}:${minute}:${second}`;
+        }
+        setTimeout(() => {
+            $("#operator_tips").mouseover(function () {
+                indexOpen = layer.tips("进行操作的账号", '#operator_tips',{
+                    tips:1
+                });
+            }).mouseout(function () {
+                layer.close(indexOpen)
+            }) 
+            $("#operated_tips").mouseover(function () {
+                indexOpen = layer.tips("被操作的账号", '#operated_tips',{
+                    tips:1
+                });
+            }).mouseout(function () {
+                layer.close(indexOpen)
+            }) 
+        }, 100)
+    </script>      
+</html>

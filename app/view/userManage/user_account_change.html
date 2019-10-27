@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+   
+</head>
+<body>
+
+                <div class="layui-card">
+                    <div class="card-header" style="padding-bottom:10px;">
+                        <div style="margin: 10px 0px 10px 25px;">
+                            <span class="spanTitle"><%=title%></span>
+                        </div>
+                        <div class="layui-form" style="text-align: left">
+                                <div class="layui-row">
+                                    <div class="layui-inline" >
+                                        <div class="layui-input-block"style=" width: 150px;margin-left: 5px;text-align:left">
+                                            <select id="s_platform_id" lay-filter="s_platform_id">
+                                                <% if(admin.account_type == 'Admin'){ %>
+                                                    <option value="0" selected="">所有平台</option>
+                                                    <% platforms.forEach(function(item){%>
+                                                    <option value="<%=item.platform_id %>" ><%=item.platform_id %> -- <%= item.platform_name %></option>   
+                                                    <% }) %>
+                                                <% }else{ %>
+                                                    <% platforms.forEach(function(item){%>
+                                                        <% if(admin.account_type == 'Agent' && admin.platform_id == platform_item.id ){ %>
+                                                        <option value="<%=item.platform_id  %>" selected=""><%=item.platform_id %> -- <%= item.platform_name %></option> 
+                                                        <% } %>
+                                                    <% }) %>
+                                                <% } %>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline" style="text-align: left">
+                                        <div class="layui-input-block"style=" width: 150px;margin-left: 5px;">
+                                            <select id="s_type" lay-filter="s_type">
+                                                <option value="0">所有类型</option>
+                                                <option value="1">游戏上分</option>
+                                                <option value="-1">游戏下分</option>
+                                                <option value="2">游戏赢分</option>
+                                                <option value="-2">游戏输分</option>
+                                                <!-- <option value="3">登录上分</option>
+                                                <option value="-3">登录下分</option> -->
+                                                <option value="4">代理给会员上分</option>
+                                                <option value="-4">代理给会员下分</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline" style="text-align: left">
+                                        <div class="layui-input-block"style=" width: 150px;margin-left: 5px;">
+                                            <select id="s_status" lay-filter="s_status">
+                                                <option value="-2">所有状态</option>
+                                                <option value="-1">处理中</option>
+                                                <option value="0">成功</option>
+                                                <option value="1">失败</option>
+                                                <option value="2">会员下分失败</option>
+                                                <option value="3">平台上分失败</option>
+                                                <option value="4">平台下分失败</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-inline" style="text-align: left">
+                                        <div class="layui-input-block"style=" width: 150px;margin-left: 5px;">
+                                            <select id="s_order_state">
+                                                <option value="0">所有处理状态</option>
+                                                <option value="1">订单创建</option>
+                                                <option value="2">订单完成</option>
+                                                <option value="3">确定完成</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-input-inline" style="width: 160px;margin-left: 5px;">
+                                        <input type="text" id="s_start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                                    </div>
+                                    <div class="layui-input-inline" >
+                                        <span>-</span>
+                                    </div>
+                                    <div class="layui-input-inline" style="width: 160px;">
+                                        <input type="text" id="s_end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                                    </div>  
+                                    <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                            <input type="text" id="s_order_id"  placeholder="订单号" class="layui-input">
+                                    </div>
+                                    <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                        <input type="text" id="s_username"  placeholder="会员账号" class="layui-input">
+                                    </div>
+                                    <!-- <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                        <input type="text" id="e_platform_id"  placeholder="平台ID" class="layui-input">
+                                        </div>
+                                    </div>
+                                    </br>
+                                    <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                                        <input type="text" id="e_platform_name"  placeholder="平台名称" class="layui-input">
+                                    </div> -->
+                                    <div class="layui-input-inline btm_width_210" style="float: right">
+                                        <button type="button" class="layui-btn" id="search">搜索</button>
+                                        <button type="button" class="layui-btn" id="clear">重置</button>
+                                        <button type="button" class="layui-btn" id="exportcount">导出</button>
+                                        <!-- <button type="button" class="layui-btn" onclick="openManualBill()">人工补单</button> -->
+                                    </div>
+                          </div>
+
+                                
+                        <input type="hidden" id="_csrf" value="<%=csrf%>">
+                    </div>
+                    <div class="layui-card-body">
+                        <table class="layui-hide" id="tables" lay-filter="tables"></table>
+                    </div>
+                </div>
+        
+            <div id="manualBill" class="popup">
+                    <div class="layui-form" action="" id='myform'>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">会员id</label>
+                            <div class="layui-input-block">
+                                <input type="text" id="m_user_id" autocomplete='off' class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">账单类型</label>
+                            <div class="layui-input-block">
+                                <select id="m_type" lay-filter="m_type">
+                                    <option value="0">类型</option>
+                                    <option value="1">游戏上分</option>
+                                    <option value="-1">游戏下分</option>
+                                    <option value="2">游戏赢分</option>
+                                    <option value="-2">游戏输分</option>
+                                    <!-- <option value="3">登录上分</option>
+                                    <option value="-3">登录下分</option> -->
+                                    <option value="4">代理给会员上分</option>
+                                    <option value="-4">代理给会员下分</option>          
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item" id='password_form'>
+                            <label class="layui-form-label">账单金额</label>
+                            <div class="layui-input-block">
+                                <input type="text" id="m_score" autocomplete="new-password" class="layui-input">
+                            </div>
+                        </div>
+                
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" onclick="createBill()">提交</button>
+                                <button class="layui-btn" onclick="closePopup()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="popup" id="initUserManage">
+                    <table class="layui-hide" id="tables1" lay-filter="tables1"></table>
+                </div>
+</body>
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        var form, layer , table , indexPopup ;
+            var STATUS={
+                '-1':'处理中',
+                0:'成功',
+                1:'失败',
+                2:'会员下分失败',
+                3:'平台上分失败', 
+                4:'平台下分失败', 
+            }
+            var TYPE = {
+               1:'游戏上分',
+               '-1':'游戏下分',
+               2:'游戏赢分',
+               '-2':'游戏输分',
+            //    3:'登录上分',
+            //    '-3':'登录下分',
+               4:'代理给会员上分',
+               '-4':'代理给会员下分',
+            };
+        $(function(){
+            layui.use(['element','form','layer','table','laydate'], function(){
+                form = layui.form;
+                table = layui.table;
+                layer = layui.layer;
+                var laydate = layui.laydate;
+                var element = layui.element;
+                laydate.render({
+                    elem: '#s_start_date',
+                    type:"date",
+                    format: 'yyyy-MM-dd',
+                });
+                laydate.render({
+                    elem: '#s_end_date',
+                    type:"date",
+                    format: 'yyyy-MM-dd',
+                });  
+                
+                $("#s_start_date").val(getBeforeDate(7));
+                $("#s_end_date").val(getBeforeDate(0));
+                initData();   
+            });
+
+            $("#search").click(function(){
+                initData();
+            });
+            $("#exportcount").click(function(){
+                let data = {
+                    start_time:$("#s_start_date").val(),
+                    end_time:$("#s_end_date").val(),
+                    agents:$("#s_agent_id").val(),//代理
+                    type:$("#s_type").val(),//类型
+                    status:$("#s_status").val(),
+                    username:$("#s_username").val(),
+                    order_id:$("#s_order_id").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    order_state:$("#s_order_state").val(),
+                    _csrf: $("#_csrf").val(),
+                };
+                let url = '/admin/userManage/userAccountChange/export';
+                let xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            let blob = this.response; //使用response作为返回，而非responseText
+                            let reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            let a = document.createElement("a");
+                            a.download = "会员账单明细.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            });
+        })
+        function initData(){
+            var start_date = $("#s_start_date").val();
+            var end_date = $("#s_end_date").val();
+             insl=table.render({
+                elem: '#tables',
+                title: '会员账单明细', //导出数据时的文件名
+                url:'/admin/userManage/userAccountChange/list',
+                where:{
+                    // e_platform_id:$("#e_platform_id").val(),
+                    // e_platform_name:$("#e_platform_name").val(),
+                    start_time:$("#s_start_date").val(),
+                    end_time:$("#s_end_date").val(),
+                    agents:$("#s_agent_id").val(),//代理
+                    type:$("#s_type").val(),//类型
+                    status:$("#s_status").val(),
+                    username:$("#s_username").val(),
+                    order_id:$("#s_order_id").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    order_state:$("#s_order_state").val(),
+                    //搜索传入的值
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                limit:10,
+                cols: [[
+                    //表格
+                    {field:'order_id',title: '订单号',align:'center',sort:true,width:160,
+                        templet: function(row) {
+                            return `<a style="color:rgb(100, 155, 18); cursor:pointer;" onclick='copyOrderId("${row.order_id}")' id='${row.order_id}'>${row.order_id}</a>`;
+                        }
+                    },
+                    // {field:'user_id',title: '会员ID',align:'center',sort:true,width:80},
+                    {field:'username',title: '会员账号',align:'center',sort:true,
+                        templet: function(row){
+                            // return row.user_account.username;
+                            return `<a href='#' style='color:#4395ff' onclick='OpenUserMassageList("${row.user_id}")'>
+                                ${row.user_account!=null?row.user_account.username:row.username}</a>`;
+                            }
+                    },
+                    {field:'platform_name',title: '平台名称',align:'center',sort:true,width:100,
+                        templet: function(row){
+                            return row.platform_info!=null?row.platform_info.platform_id+'--'+row.platform_info.platform_name:'/';
+                            }
+                    },
+                    {field:'type',title: '账单类型',align:'center',
+                        templet: function(row){
+                            return TYPE[row.type];
+                        }
+                    },
+                    {field:'game_id',title: '游戏',align:'center',
+                        templet: function(row){
+                           return row.game_info!=null?row.game_info.game_name:'/';
+                        }
+                    },
+                    {field:'score', title: '账单金额', align:'center',sort:true,
+                        templet: function(row) {
+                            console.log(row);
+                            let lost_win = (row.pre_score>row.current_score ? row.score/-100 :row.score/100).toFixed(2);
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                        }
+                    },
+                    {field:'pre_score', title: '账前金额', align:'center',sort:true,
+                        templet: function(row){
+                            return (row.pre_score/100).toFixed(2);
+                        }
+                    },
+                    {field:'current_score', title: '账后金额', align:'center',sort:true,
+                        templet: function(row){
+                            return (row.current_score/100).toFixed(2)
+                        }
+                    },
+                    {field:'deduct_gold', title: '抽水', align:'center',sort:true,
+                        templet: function(row){
+                            return ((row.deduct_gold || 0) / 100).toFixed(2);
+                        }
+                    },
+                    {field:'create_time', title: '账单时间', align:'center',sort:true},
+                    {field:'status', title: '状态', align:'center',sort:true,width:70,
+                        templet:function(row){
+                            if(row.status == -1){
+                                return "处理中";
+                            }else if(row.status == 0){
+                                return "成功";
+                            }else if(row.status == 1){
+                                return "失败";
+                            }else if(row.status == 2){
+                                return "会员下分失败";
+                            }else if(row.status == 3){
+                                return "平台上分失败";
+                            }else if(row.status == 4){
+                                return "平台下分失败";
+                            }else{
+                                return "-";
+                            }
+                        }             
+                    },
+                    {field:'order_state', title: '处理状态', align:'center',sort:true,width:70,
+                        templet:function(row){
+                            if(row.order_state == 1){
+                                return "订单创建！";
+                            }else if(row.order_state == 2){
+                                return "订单完成";
+                            }else if(row.order_state == 3){
+                                return "确定完成";
+                            }else{
+                                return "-";
+                            }
+                        }             
+                    },
+                    {field:'create_operator', title: '操作人员', align:'center',sort:true},
+                    // {field:'cz', title: '会员详情', align:'center',sort:true,width:90,
+                    //     templet: function(row){
+                    //             return "<a href='#' style='color:#4395ff' onclick='OpenUserMassageList(\""+row.user_id+"\")'>查看</a>";
+                    //         }
+                    // },
+                ]],
+                done: function (res, curr, count) {
+                exportData=res.data;
+            }
+            });
+        }
+
+        $("#clear").click(function() {
+            $("#s_type").val("0")
+            $("#s_status").val("-2")
+            $("#s_order_id").val("")
+            $("#s_username").val("")
+            // $("#s_start_date").val("")
+            // $("#s_end_date").val("")
+            $("#s_platform_id").val("0")
+            // $("#e_platform_id").val("")
+            // $("#e_platform_name").val("")
+            $("#s_order_state").val("0")
+
+            form.render()
+        })
+        //会员管理
+        function initUserManage(user_id){
+            tableObj = table.render({
+                elem: '#tables1',
+                title: '会员管理', //导出数据时的文件名
+                url:'/admin/userManage/userAccountChange/findUserMassageList',
+                where:{
+                    user_id:user_id,
+                    platform_id:'',
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:false,
+                cols: [[
+                {field:'id', title: '会员ID', align:'center',sort: true},
+                    {field:'username', title: '会员账号', align:'center'},
+                    {field:'paltform_id',title: '所属平台', sort: true, align:'center',
+                        templet: function(row){
+                                return row.platform_info?row.platform_info.platform_name:"/";
+                        }
+                    },
+                    {field:'server_money',title: '余额', sort: true, align:'center',
+                        templet: function(row){
+                            return row.server_money ? (row.server_money / 100).toFixed(2) : "0.00";
+                        }
+                    },
+                    {field:'win_gold', title: '总投注', align:'center', sort: true,
+                        templet:function(row){
+                            return  (row.valid_bet / 100).toFixed(2);
+                        }
+                    },
+                    {field:'win_gold', title: '总赢分', align:'center', sort: true,
+                        templet:function(row){
+                            return  (row.win_gold / 100).toFixed(2);
+                        }
+                    },
+                    {field:'lost_gold', title: '总输分', align:'center', sort: true,
+                        templet:function(row){
+                            return  (row.lost_gold / 100).toFixed(2);
+                        }
+                    },
+                    {field:'deduct_gold', title: '总抽水', align:'center', sort: true,
+                        templet:function(row){
+                            return  (row.deduct_gold / 100).toFixed(2);
+                        }
+                    },
+                    {field:'lost_win',title: '总输赢', sort: true, align:'center',
+                        templet:function(row){
+                            let lost_win = (row.lost_win / 100).toFixed(2);  // dq
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                        }
+                    },
+                    {field:'lost_gold', title: '杀数', align:'center',
+                        templet:function(row){
+                            var kill = row.valid_bet ? ((row.lost_win / row.valid_bet) * -100).toFixed(2) : 0;
+                            return parseFloat(kill) > 0 ? "<span style = 'color:green'>"+ kill + "%</span>":"<span style = 'color:red'>"+ kill + "%</span>" ;
+                        }
+                    },
+                    {field:'isOnline', title: '是否在线', align:'center',
+                        templet: function(row){
+                            return row.isOnline?'<span style="color:green">在线</span>':'离线'; 
+                        }
+                    },
+                    {field:'createdate',title: '创建时间', sort: true, align:'center'},
+                    {field:'lastlogintime',title: '最后登录时间', sort: true, align:'center'},
+                    {field:'is_online',title: '状态', sort: true, align:'center',
+                        templet:function(row){
+                            if(row.status){
+                                return '正常';
+                            }else{
+                                return '关闭';
+                            }
+                        }    
+                    }
+                ]]
+            });
+        }
+        function OpenUserMassageList(user_id){
+            console.log(user_id)
+            var table =layer.open({
+                type: 1,
+                shade: false,
+                maxmin: true,
+                content: $("#initUserManage"),
+                title: '会员明细',
+                area: ['100%', '100%'],
+                });
+                initUserManage(user_id);
+        }
+        function copyOrderId(orderId) {
+           document.addEventListener('copy', save);
+           document.execCommand('copy');
+           document.removeEventListener('copy', save);
+           function save(e) {
+            e.clipboardData.setData('text/plain', orderId);
+            e.preventDefault();
+           }
+           layer.msg('复制成功');
+        }
+
+        function getBeforeDate(n){
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon=d.getMonth()+1;
+            var day=d.getDate();
+            if(day <= n){
+                if(mon>1) {
+                    mon=mon-1;
+                }
+                else {
+                    year = year-1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate()-n);
+            year = d.getFullYear();
+            mon=d.getMonth()+1;
+            day=d.getDate();
+            s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+            return s;
+        }
+    </script>      
+</html>

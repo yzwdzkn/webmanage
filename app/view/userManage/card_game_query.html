@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%=title%></title>
+    
+    <!-- layui  -->
+   <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/public/admin/css/admin.css">
+
+    <style>
+        /* .layui-card{
+            margin: 20px 5%;
+        } */
+        .popup{
+            padding: 20px;
+            display: none;
+        }
+        .btm_width_70{
+            margin-left: 5px; 
+            margin-bottom: 2px; 
+            width: 70px;
+        }
+        .btm_width_100{
+            margin-left: 5px; 
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layui-card">
+        <div class="card-header" style="padding-bottom:10px;">
+            <div style="margin: 10px 0px 10px 25px;">
+                <span class="spanTitle"><%=title%></span>
+            </div>
+            <div class="layui-row">
+            <div class="layui-form" >
+                <div class="layui-inline" style="text-align: left">
+                        <div class="layui-input-block"style=" width: 180px;margin-left: 20px;">
+                        <select id="s_platform_id" lay-filter="s_platform_id">
+                            <% if(admin.account_type == 'Admin'){ %>
+                                <option value="0" selected="">所有平台</option>
+                                <% platforms.forEach(function(item){%>
+                                <option value="<%=item.platform_id %>" ><%=item.platform_id %> -- <%= item.platform_name %></option>   
+                                <% }) %>
+                            <% }else{ %>
+                                <% platforms.forEach(function(item){%>
+                                    <% if(admin.account_type == 'Agent' && admin.platform_id == platform_item.id ){ %>
+                                    <option value="<%=item.platform_id  %>" selected=""><%=item.platform_name %></option> 
+                                    <% } %>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline" style="text-align: left">
+                        <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                            <select id="s_game_id" lay-filter="s_game_id">
+                                <option value="0" selected="">所有游戏</option>
+                                <% gameData.forEach(function(item){%>
+                                <option value="<%=item.game_id %>"><%=item.game_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="layui-input-inline"style=" width: 180px;margin-left: 5px;">
+                            <select id="s_room_id" >
+                                <option value="0" selected="">所有房间</option>
+                            </select>
+                        </div>
+                </div>
+                <div class="layui-input-inline" style="width: 160px;">
+                    <input type="text" id="s_start_date" lay-verify="date" placeholder="开始时间" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-input-inline" >
+                    <span>-</span>
+                </div>
+                <div class="layui-input-inline" style="width: 160px;">
+                    <input type="text" id="s_end_date" lay-verify="date" placeholder="结束时间" autocomplete="off" class="layui-input">
+                </div>
+                  
+                <div class="layui-input-inline" style="width: 120px;margin-left: 5px;">
+                    <input type="text" id="s_username"  placeholder="会员账号" class="layui-input">
+                </div>
+
+                <div class="layui-input-inline" style="width: 180px;margin-left: 5px;">
+                    <input type="text" id="s_game_no"  placeholder="牌局编号" class="layui-input">
+                </div>
+                <div class="layui-input-inline btm_width_210" style="float: right" >
+                    <button type="button" class="layui-btn" id="search">搜索</button>
+                    <button type="button" class="layui-btn" id="clear">重置</button>
+                    <button type="button" class="layui-btn" id="export">导出</button>
+                </div>
+            </div>
+        <!-- </br> -->
+                <input type="hidden" id="_csrf" value="<%=csrf%>">
+            </div>
+            </div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="tables" lay-filter="tables"></table>
+            </div>
+    </div>
+    <div style="margin: 0 auto;display: block"></div>
+</body>
+
+<div id="detailsPopup" class="popup">
+  <div class="layui-form" action="">
+      <table class="layui-table">
+          <colgroup>
+            <col width="80">
+            <col width="150">
+            <col width="25">
+            <col width="25">
+            <col width="25">
+            <col width="25">
+          </colgroup>
+          <tbody id="mb_tbody">
+              <!-- <tr>
+                  <td>牌局编号：</td>
+                  <td id="qz_game_no">******</td>
+                  <td>底注</td>
+                  <td id="qz_game_blink">5</td>
+              </tr> -->
+              <!-- <tr>
+                  <td>2号桌会员：</td>
+                  <td>牌型</td>
+                  <td>下注：</td>
+                  <td>3倍</td>
+              </tr>
+              <tr>
+                  <td>1号桌会员：</td>
+                  <td>抢庄</td>
+                  <td>下注：</td>
+                  <td>2倍</td>
+              </tr>
+              <tr>
+                  <td>3号桌会员：</td>
+                  <td>牌型</td>
+                  <td>下注：</td>
+                  <td>2倍</td>
+              </tr> -->
+
+              <!-- <tr>
+                  <td>4号桌会员：</td>
+                  <td>牌型</td>
+                  <td>下注：</td>
+                  <td>5倍</td>
+              </tr> -->
+              <!-- <tr>
+                  <td>系统抽水:</td>
+                  <td colspan="3">0.5</td>
+              </tr>
+              <tr>
+                  <td>会员输赢：:</td>
+                  <td colspan="3">5.65</td>
+              </tr> -->
+          </tbody>
+        </table>
+        
+      <div class="layui-form-item">
+          <div class="layui-input-block" style="margin: 10px auto; text-align: center" >
+              <button class="layui-btn" onclick="closePopup()">关闭</button>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+<script src="/public/admin/js/jquery.min.js"></script>
+<!-- layui js -->
+<script src="/public/admin/static/layui/layui.js"></script>
+<script src="/public/admin/js/tabsIframeClose.js"></script>
+<script src="/public/admin/js/clipboard.min.js"></script>
+
+    <script>
+           var clipboard
+        $(function(){
+            clipboard = new ClipboardJS('.js-clipboard');
+            clipboard.on('success', function(e) {
+                console.log(e)
+                layer.msg('复制成功');
+            });
+
+            clipboard.on('error', function(e) {
+                console.log(e)
+                layer.msg('复制失败');
+            });
+
+        });
+
+        var form, layer , table , indexPopup ,currentData ,tableObj ,exportData;
+        $(function(){
+            layui.use(['element','form','layer','laydate','table'], function(){
+                var element = layui.element;
+                var laydate = layui.laydate;
+                table = layui.table;
+                layer = layui.layer;
+                form = layui.form;
+
+                laydate.render({
+                    elem: '#s_start_date',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    type: 'datetime'
+                });
+                laydate.render({
+                    elem: '#s_end_date',
+                    format: 'yyyy-MM-dd HH:mm:ss',
+                    type: 'datetime'
+                });
+                const today = new Date();
+                const sevenDaysBefore = new Date(Date.now()-(1000 * 3600*24*7))
+                var start_date = dateFomat(sevenDaysBefore);
+                var date = dateFomat(today);
+
+                $("#s_start_date").val(start_date);
+                $("#s_end_date").val(date);
+
+                // $("#s_start_date").val(getBeforeDate(7));
+                // $("#s_end_date").val(getBeforeDate(0));
+
+                form.on('select(s_game_id)', function(data){   
+                    var game_id = data.value;
+                    console.log("game_id:",game_id);
+                    $.ajax({
+                        url:"/admin/dataManage/gameLostwinStatistics/findRoom",
+                        type:"POST",
+                        data:{game_id:game_id,_csrf:$("#_csrf").val()},
+                        timeout:60000, //1分钟
+                        success:function(data){
+                            $("#s_room_id").empty().append('<option value="0" selected="">所有房间</option>');
+                            for (var i = 0; i < data.rooms.length; i++) {
+                                $("#s_room_id").append('<option value="'+data.rooms[i].room_id+'">'+data.rooms[i].room_name+'</option>');
+                            }
+                            form.render('select'); 
+                        },
+                        error: function(xhr, status, error){
+                            console.log("[ERROR] - ",error);
+                        }
+                    })
+                });
+                initData();         
+            });
+
+            $("#search").click(function(){
+                initData();
+                // reloadTable();
+            });
+            $("#export").click(function(){
+                let platform_name = $('#s_platform_id').find('option:selected').text()
+                let data = {
+                    start_time:$("#s_start_date").val(),
+                    end_time:$("#s_end_date").val(),
+                    game_id:$("#s_game_id").val(),
+                    game_name: $('#s_game_id').find('option:selected').text(),
+                    room_id:$("#s_room_id").val(),
+                    room_name: $('#s_room_id').find('option:selected').text(),
+                    username:$("#s_username").val(),
+                    game_no:$("#s_game_no").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    platform_name,
+                    _csrf:$("#_csrf").val()
+                };
+                var url = '/admin/userManage/cardGameQuery/export';
+                var xhr = new XMLHttpRequest();
+                    xhr.open('post', url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    data = JSON.stringify(data);
+                    xhr.responseType = "blob"; // 返回类型blob，XMLHttpRequest支持二进制流类型
+                    xhr.onload = function() {
+                        if (this.status === 200) {  
+                            var blob = this.response; //使用response作为返回，而非responseText
+                            var reader = new FileReader();
+                            reader.readAsDataURL(blob); // 转换为base64，可以直接放入a标签href
+                            reader.onload = function(e) {
+                            // 转换完成，创建一个a标签用于下载
+                            var a = document.createElement("a");
+                            a.download = "会员牌局详情.xlsx";
+                            a.href = e.target.result;
+                            a.click();
+                            layer.msg('下载成功');
+                            };
+                        } else {
+                            layer.msg('下载失败');
+                        }
+                    };
+                    xhr.send(data);
+            })
+        })
+
+        function initData(){
+            var game_id = $("#search_game_id").val();
+            var matching_status = $("#search_matching_status").val();
+            tableObj = table.render({
+                elem: '#tables',
+                title: '牌局查询', //导出数据时的文件名
+                url:'/admin/userManage/cardGameQuery/list',
+                where:{
+                    // e_platform_id:$("#e_platform_id").val(),
+                    // e_platform_name:$("#e_platform_name").val(),
+                    start_time:$("#s_start_date").val(),
+                    end_time:$("#s_end_date").val(),
+                    game_id:$("#s_game_id").val(),
+                    room_id:$("#s_room_id").val(),
+                    username:$("#s_username").val(),
+                    game_no:$("#s_game_no").val(),
+                    platform_id:$("#s_platform_id").val(),
+                    _csrf:$("#_csrf").val()
+                }, //其他请求参数
+                page:true,
+                limits:[10,20,50,100,500],
+                cols: [[
+                    {field:'start_time', title: '开始时间',width:160, align:'center',sort: true},
+                    {field:'end_time', title: '游戏时长',width:80, align:'center',sort: true,
+                        templet: function(row){
+                            return ((new Date(row.end_time).getTime() - new Date(row.start_time).getTime()) / 1000) + "s";
+                        }    
+                    },
+                    {field:'game_no',title: '牌局编号', align:'center',
+                        templet: function(row){
+                            return "<a href='#' style='color:#4395ff' onclick='seeGameNO(\""+row.game_no+"\")'>查看</a>";
+                        }
+                    },
+                    {field:'game_name', title: '游戏名称' ,align:'center'},
+                    {field:'room_name', title: '房间名称'  ,align:'center'},
+                    {field:'room_type', title: '房间模式'  ,align:'center',
+                        templet: function(row){
+                            if( row.room_type == 1 ){
+                                return "站点独立匹配";
+                            }else if( row.room_type == 2 ){
+                                return "平台匹配";
+                            }else if( row.room_type == 3 ){
+                                return "机器人匹配";
+                            }else if( row.room_type == 4 ){
+                                return "<span style='color:red'>追杀</span>";
+                            }else if( row.room_type == 5 ){
+                                return "<span style='color:green'>放水</span>";
+                            }else if( row.room_type == 6 ){
+                                return "公共";
+                            }else if( row.room_type == 7 ){
+                                return "高级追杀";
+                            }else{
+                                return "未知:" + row.room_type;
+                            }
+                        }
+                    },
+                    {field:'username', title: '会员账号'  ,align:'center'},
+                    {field:'platform_name', title: '平台'  ,align:'center',
+                        templet: function(row){
+                            return row.platform_name!=null?row.platform+'--'+row.platform_name:'/'
+                        }
+                    },
+                    // {field:'pos_id', title: '座位号'  ,align:'center',width:78,sort:true},
+                    {field:'valid_bet', title: '会员投注'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.valid_bet / 100).toFixed(2));
+                        }
+                    },
+                    {field:'profit', title: '会员输赢'  ,align:'center',sort: true,
+                        templet: function(row){
+                            let lost_win = parseFloat((row.profit / 100).toFixed(2));
+                            return parseFloat(lost_win) >= 0? "<span style = 'color:green'>"+ lost_win + "</span>":"<span style = 'color:red'>"+ lost_win + "</span>" ;
+                        }
+                    },
+                    {field:'deduct', title: '抽水'  ,align:'center',sort: true,
+                        templet: function(row){
+                            return parseFloat((row.deduct / 100).toFixed(2));
+                        }
+                    },
+                    {field:'cz',title: '查看详情', align:'center',
+                        templet: function(row){
+                            return "<a href='#' style='color:#4395ff' onclick='openPopup(\""+row.game_no+"\",\""+row.game_name+"\")'>详情</a>";
+                        }
+                    },
+                ]],
+                done: function (res, curr, count) {
+                    exportData=res.data;
+                }
+            });
+        }
+
+        function reloadTable(){
+          tableObj.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+              start_time:$("#s_start_date").val(),
+              end_time:$("#s_end_date").val(),
+              game_id:$("#s_game_id").val(),
+              room_id:$("#s_room_id").val(),
+              username:$("#s_username").val(),
+              game_no:$("#s_game_no").val(),
+              _csrf:$("#_csrf").val()
+            }
+            // ,page: {
+            //   curr: 1 //重新从第 1 页开始
+            // }
+          });
+        }
+
+        function openPopup(game_no,game_name){
+          $.ajax({
+              url:"/admin/userManage/cardGameQuery/findByGameNo",
+              type:"get",
+              data:{
+                  game_no:game_no,
+                  _csrf:$("#_csrf").val()},
+              timeout:60000, //1分钟
+              success:function(data){
+                console.log("data:",data);
+                console.log("----data----:",JSON.parse(data.record.data));
+                var type = 1;
+                switch(data.record.game_id){
+                    case 1:  // 十三水
+                    case 2:  // 抢庄牛牛
+                    case 3:  // 二八杠
+                    case 5:  // 炸金花
+                    case 6:  // 21点
+                    case 11: // 三公
+                    case 12: // 抢庄牌九
+                    case 14: // 看牌抢庄牛牛
+                    case 17:  // 推筒子
+                        QZtype(data.record); // 抢庄类
+                        break;
+                    case 4: // 骰宝
+                    case 9: // 百家乐
+                    case 13: // 龙虎
+                    case 15: // 摇摇乐
+                    case 16: // 抢红包
+                    case 18: // 百人牛牛
+                    case 19: // 百人炸金花
+                    case 20: // 百人德州
+                        BRtype(data.record); // 百人类
+                        break;
+                    case 7: // 斗地主
+                        type = 2 ;
+                        HHtype(data.record); // 回合类
+                        break;
+                    default:
+
+                }
+
+                if(type == 1){
+                    indexPopup = layer.open({
+                        type: 1,
+                        skin: 'layui-layer-demo', //样式类名
+                        closeBtn: 1, //显示关闭按钮
+                        title: game_name +' - 详情',
+                        anim: 2,
+                        area: ['80%', '580px'],
+                        shadeClose: false, //开启遮罩关闭
+                        content: $("#detailsPopup"),
+                        cancel: function () {
+                            layer.close(indexPopup);
+                            $("#mb_tbody").empty();
+                        }
+                    });
+                }else{
+                    indexPopup = layer.open({
+                        type: 1,
+                        skin: 'layui-layer-demo', //样式类名
+                        closeBtn: 1, //显示关闭按钮
+                        title: game_name +' - 详情',
+                        anim: 2,
+                        area: ['80%', '580px'],
+                        shadeClose: false, //开启遮罩关闭
+                        content: $("#detailsPopup"),
+                        cancel: function () {
+                            layer.close(indexPopup);
+                            $("#mb_tbody").empty();
+                        }
+                    })
+                }
+
+              },
+              error: function(xhr, status, error){
+                  console.log("[ERROR] - ",error);
+              }
+          })
+          
+          
+        }
+
+        function closePopup(){
+            layer.close(indexPopup);
+            $("#mb_tbody").empty();
+        }
+
+        /**
+         * 抢庄类型游戏
+         */
+        function QZtype(record){
+            var data = JSON.parse(record.data);
+            $("#mb_tbody").empty().append('<tr><td>牌局编号：</td><td>'+record.game_no+'</td><td>底注：</td><td colspan="3">'+parseInt(data.record.blink / 100 )+'</td>');
+            if( data.gameType == "esyd"){ // 21点
+                var pubArr = data.record.pub1.split(",");
+                for (var i = 0; i < pubArr.length; i++) {
+                    var cardStr = "";
+                    var posArr = [];
+                    var pubItemArr = pubArr[i].split("|");
+                    if(pubItemArr.length == 1){ // 只在当前位置下注
+                        posArr.push(+pubItemArr[0][0]);
+                        var itemArr = pubItemArr[0].substring(1,pubItemArr[0].length).split("-"); // 看是否又分牌,length 大于1 就有分牌
+                        for (var j = 0; j < itemArr.length; j++) {
+                            var item = itemArr[j].split(":")
+                            if(itemArr.length > 1) cardStr += "<span style='color:blue'>牌"+(j+1)+": </span>"
+                            for (var z = 0; z < item.length; z++) {
+                                cardStr += indexToCard(item[z]); // 获取牌型
+                                if( z < item.length - 1) cardStr += ",";
+                            }
+                            if(itemArr.length > 1 && j < itemArr.length - 1) cardStr += " | "
+                        }
+                    }else{ // 其他位置有下注
+                        for (var j = 0; j < pubItemArr.length; j++) {
+                            posArr.push(+pubItemArr[j][0]);
+                            cardStr += "<span style='color:red'>" + pubItemArr[j][0] + "号桌:</span>";
+                            var itemArr = pubItemArr[j].substring(1,pubItemArr[j].length).split("-"); // 看是否又分牌,length 大于1 就有分牌
+                            for (var k = 0; k < itemArr.length; k++) {
+                                var item = itemArr[k].split(":");
+                                if(itemArr.length > 1) cardStr += "<span style='color:blue'>牌"+(k+1)+": </span>"
+                                for (var z = 0; z < item.length; z++) {
+                                    cardStr += indexToCard(item[z]); // 获取牌型
+                                    if( z < item.length - 1) cardStr += ",";
+                                }
+                                if(itemArr.length > 1 && k < itemArr.length - 1) cardStr += " | "
+                            }
+                            if( j < pubItemArr.length - 1) cardStr += " ; ";
+                        }
+                    }
+                    var lostWinStr = "";
+                    var name = "";
+                    if(pubArr[i][0] && pubArr[i][0] != '0'){ // 计算每个人的输赢
+                        var attItem = data.record.att[pubArr[i][0]];
+                        name = attItem.name;
+                        var profit = ( attItem.changes / 100).toFixed(2); // 会员输赢
+                        lostWinStr = '<td>会员输赢:</td><td>'+ profit +'</td>';
+                    }
+                    if(lostWinStr == ""){
+                        $("#mb_tbody").append('<tr style="'+( posArr.indexOf(record.pos_id) != -1  ? "color:green" : "" )+'"><td>' + (posArr.join(",") == "0" ? "庄家" : posArr.join(",") + "号桌会员") +'：<b>'+ name +'</b></td><td colspan="5">'+cardStr+'</td>');
+                    }else{
+                        $("#mb_tbody").append('<tr style="'+( posArr.indexOf(record.pos_id) != -1  ? "color:green" : "" )+'"><td>' + (posArr.join(",") == "0" ? "庄家" : posArr.join(",") + "号桌会员") +'：<b>'+ name +'</b></td><td colspan="3">'+cardStr+'</td>'+lostWinStr);
+                    }
+                }
+            }else if(data.gameType == "sss"){ // 十三水
+                var pubArr = data.record.pub1.split(";"); // 牌型数据
+                for (var i = 0; i < pubArr.length - 1; i++) {
+                    var pubItemArr = pubArr[i].split(",");
+                    var cardStr = "";
+                    var pos = pubItemArr[pubItemArr.length - 1]; // 座位号
+                    var attItem = data.record.att[pos - 1];
+                    var name = attItem.name; // 会员名称
+                    for (var j = 0; j < pubItemArr.length - 1; j++) {
+                        var itemArr = pubItemArr[j].split(":");
+                        if(j == 0){
+                            cardStr += "<span style='color:red'>"
+                        }else if(j == 1){
+                            cardStr += "<span style='color:green'>"
+                        }else{
+                            cardStr += "<span style='color:blue'>"
+                        }
+                        for (var k = 0; k < itemArr.length; k++) {
+                            cardStr += indexToCard(itemArr[k]); // 获取牌型
+                            if( k < itemArr.length - 1) cardStr += ",";
+                        }
+                        if( j < pubItemArr.length - 1) cardStr += "</span> ; ";
+                    }
+                    var profit = ( attItem.changes / 100).toFixed(2); // 会员输赢
+                    $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "background-color:#e1F1F1" : "" )+'"><td>'+pos+'号桌会员：<b>'+ name +'</b></td><td colspan="3">'+cardStr+'</td><td>会员输赢:</td><td>'+ profit +'</td>');
+                }
+            }else if(data.gameType == "zjh"){
+                for (var i in data.record.att) {
+                    var attItem = data.record.att[i];
+                    var name = attItem.name; // 会员名称
+                    var pos = attItem.pos; // 座位号
+                    var cardArr = attItem.card;
+                    var cardStr = "";
+                    for (var j = 0; j < cardArr.length; j++) {
+                        cardStr += indexToCard(cardArr[j]); // 获取牌型
+                        if( j < cardArr.length - 1) cardStr += ",";
+                    }
+                    var profit = ( attItem.changes / 100).toFixed(2); // 会员输赢
+                    $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "background-color:#e1F1F1" : "" )+'"><td>'+pos+'号桌会员：<b>'+ name +'</b></td><td colspan="3">'+cardStr+'</td><td>会员输赢:</td><td>'+ profit +'</td>');
+                }
+            }else if(data.gameType == "ttz"){
+                for (var i in data.record.att) {
+                    var attItem = data.record.att[i];
+                    var name = attItem.name; // 会员名称
+                    var pos = attItem.pos; // 座位号
+                    var cardStr = ttzIndexToCardType(data.gameType, attItem.cardType); // 获取牌型
+                    var profit = ( attItem.changes / 100).toFixed(2); // 会员输赢
+                    $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "background-color:#e1F1F1" : "" )+'"><td>'+pos+'号桌会员：<b>'+ name +'</b></td><td colspan="3">'+cardStr+'</td><td>会员输赢:</td><td>'+ profit +'</td>');
+                }
+
+            } else{
+                var type = 0;
+                if (Object.prototype.toString.call(data.record.att) === '[object Object]') {
+                    type = 1;
+                }
+                for (var i = 0; i < data.record.act.length; i++) {
+                    var pos = data.record.act[i].pos; // 座位号
+                    var attItem = type ? data.record.att[pos] : data.record.att[pos - 1];
+                    var name = attItem.name || "";
+                    var profit = ( attItem.changes / 100).toFixed(2); // 会员输赢
+                    if( data.record.dl == pos && data.record.act[i].ty == ACTION[data.gameType].qz){ // dl庄的座位号
+                        var cardStr = indexToCardType(data.gameType, data.record.att[type ? pos : pos - 1].cardType); // 获取牌型
+                        $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+pos+'号桌会员：<b>'+ name +'</b></td><td>'+cardStr+'</td><td>抢庄：</td><td>'+data.record.act[i].bet+'倍</td><td>会员输赢:</td><td>'+ profit +'</td>');
+                    } else if( data.record.act[i].ty == ACTION[data.gameType].xz) {
+                        var cardStr = indexToCardType(data.gameType, data.record.att[type ? pos : pos - 1].cardType); // 获取牌型
+                        $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+pos+'号桌会员：<b>'+ name +'</b></td><td>'+cardStr+'</td><td>下注：</td><td>'+data.record.act[i].bet+'倍</td><td>会员输赢:</td><td>'+ profit +'</td>');
+                    }
+                }
+            }
+            
+            $("#mb_tbody").append('<tr><td>系统抽水：</td><td colspan="5">'+parseFloat(record.deduct / 100).toFixed(2)+'</td>');
+        }
+
+        /**
+         * 百人场类型游戏
+         */
+         function BRtype(record){
+            var data = JSON.parse(record.data);
+            $("#mb_tbody").empty().append('<tr><td>牌局编号：</td><td>'+record.game_no+'</td>');
+           
+            if( data.gameType == "qhb"){ // 21点
+                $("#mb_tbody").append('<tr><td>系统抽水：</td><td>'+parseFloat(record.deduct / 100).toFixed(2)+'</td>');
+                $("#mb_tbody").append('<tr><td>会员输赢：</td><td>'+parseFloat(record.profit / 100).toFixed(2)+'</td>');
+            }else{
+
+                var act = data.record.att[0].act;
+                // 计算会员投注点位置 start
+                var betStr = "";
+                for (var i = 0; i < act.length; i++) {
+                    if(act[i].ty == ACTION[data.gameType].xz){
+                        betStr += betStr ? "," : "";
+                        betStr += indexToCardType(data.gameType,act[i].pos) + "(" + parseInt(act[i].bet / 100) + "元)";
+                    }
+                }
+                // end
+                
+                $("#mb_tbody").append('<tr><td>会员投注点：</td><td>'+betStr+'</td>');
+
+                // 计算牌面值start
+                var pubStr = "";
+                var pubArr = data.record.pub1.split("|");
+                for (var i = 0; i < pubArr.length; i++) {
+                    var itemArr = pubArr[i].split(":");
+                    for (var j = 0; j < itemArr.length; j++) {
+                        if(record.game_id != 15 && record.game_id != 4){
+                            pubStr += indexToCard(itemArr[j])
+                        }else{
+                            pubStr += itemArr[j];
+                        }
+                        if(j < (itemArr.length - 1 ) )  pubStr += " - ";
+                    }
+                    if(i < pubArr.length - 1 )  pubStr += " ; ";
+                }
+                // end
+
+                $("#mb_tbody").append('<tr><td>庄家开牌：</td><td>'+pubStr+'</td>');
+                $("#mb_tbody").append('<tr><td>会员总下注额：</td><td>'+( parseInt(data.record.att[0].take / 100) )+'</td>');
+                $("#mb_tbody").append('<tr><td>系统抽水：</td><td>'+parseFloat(record.deduct / 100).toFixed(2)+'</td>');
+                $("#mb_tbody").append('<tr><td>会员输赢：<b>'+ data.record.att[0].name +'</b></td><td>'+parseFloat(record.profit / 100).toFixed(2)+'</td>');
+            }
+           
+        }
+
+        /**
+         * 回合类
+         **/
+        function HHtype(record){
+            var data = JSON.parse(record.data);
+            $("#mb_tbody").empty().append('<tr><td>牌局编号：</td><td>'+record.game_no+'</td><td>底注：</td><td>'+parseInt(data.record.blink / 100 )+'</td>');
+            if( data.gameType == "ddz"){
+                var userData = {};
+                var index = data.record.dl;
+                // 计算手牌
+                for (var i = 0; i < data.record.att.length; i++) {
+                    var cardArr = data.record.att[i].card;
+                    var pos = data.record.att[i].pos;
+                    var cardStr = "";
+                   
+                    cardArr = cartSort(cardArr);
+                    
+                    for (var j = 0; j < cardArr.length; j++) {
+                        cardStr += indexToCard2(cardArr[j]) + " ";
+                    }
+
+                    userData[pos] = {
+                        name:data.record.att[i].name,
+                        cards:cardStr
+                    }; // 记录会员座位号对应会员名称
+
+                    if(pos < data.record.dl && Math.abs(data.record.dl-pos) == 1 ){
+                        userData[pos].index = 2;
+                    }else if(pos < data.record.dl && Math.abs(data.record.dl-pos) == 2 ){
+                        userData[pos].index = 1;
+                    }else{
+                        userData[pos].index = Math.abs(data.record.dl-pos)
+                    }
+
+                    $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+data.record.att[i].name+'】</td><td colspan="3">发牌：'+cardStr+'</td>');
+                }
+
+                
+
+                // 【会员1】情敌三千（ID:322122550641），本局得分: -200
+                // 【会员2】寂寞喝杯酒（ID:981），本局得分: 400
+                // 【会员3】红十872238（ID:2179），本局得分: -200
+                // --------------------------------------------------------------------------------
+                // 【情敌三千】	发牌: 大王 ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3
+                // 【寂寞喝杯酒】	发牌: 小王 ?2 ?2 ?A ?A ?Q ?J ?10 ?10 ?9 ?8 ?7 ?7 ?6 ?5 ?5 ?5
+                // 【红十872238】	发牌: ?2 ?A ?A ?K ?J ?J ?10 ?9 ?9 ?9 ?8 ?6 ?5 ?4 ?4 ?3 ?3
+                // 【寂寞喝杯酒】	叫地主(3分)
+                // 【红十872238】	不抢
+                // 【情敌三千】	不抢
+                // 【寂寞喝杯酒 (地主)】	取底牌: ?K ?Q ?Q			（剩余: 小王 ?2 ?2 ?A ?A ?K ?Q ?Q ?Q ?J ?10 ?10 ?9 ?8 ?7 ?7 ?6 ?5 ?5 ?5）
+                // 【寂寞喝杯酒 (地主)】	加倍
+                // 【红十872238 (农民1)】	不加倍
+                // 【情敌三千 (农民2)】	不加倍
+                // 【寂寞喝杯酒 (地主)】	不明牌
+                // 【寂寞喝杯酒 (地主)】	?J ?10 ?9 ?8 ?7 ?6			（剩余: 小王 ?2 ?2 ?A ?A ?K ?Q ?Q ?Q ?10 ?7 ?5 ?5 ?5）
+                // 【红十872238 (农民1)】	不要			（剩余: ?2 ?A ?A ?K ?J ?J ?10 ?9 ?9 ?9 ?8 ?6 ?5 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: 大王 ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?5 ?5 ?5 ?7			（剩余: 小王 ?2 ?2 ?A ?A ?K ?Q ?Q ?Q ?10）
+                // 【红十872238 (农民1)】	?9 ?9 ?9 ?5			（剩余: ?2 ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: 大王 ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?Q ?Q ?Q ?10			（剩余: 小王 ?2 ?2 ?A ?A ?K）
+                // 【红十872238 (农民1)】	不要			（剩余: ?2 ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: 大王 ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?K			（剩余: 小王 ?2 ?2 ?A ?A）
+                // 【红十872238 (农民1)】	?2			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: 大王 ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	小王			（剩余: ?2 ?2 ?A ?A）
+                // 【红十872238 (农民1)】	不要			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	大王			（剩余: ?2 ?K ?K ?Q ?J ?10 ?8 ?8 ?7 ?7 ?6 ?6 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	不要			（剩余: ?2 ?2 ?A ?A）
+                // 【红十872238 (农民1)】	不要			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	?8 ?8 ?7 ?7 ?6 ?6			（剩余: ?2 ?K ?K ?Q ?J ?10 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	不要			（剩余: ?2 ?2 ?A ?A）
+                // 【红十872238 (农民1)】	不要			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	?Q			（剩余: ?2 ?K ?K ?J ?10 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?2			（剩余: ?2 ?A ?A）
+                // 【红十872238 (农民1)】	不要			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: ?2 ?K ?K ?J ?10 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?A ?A			（剩余: ?2）
+                // 【红十872238 (农民1)】	不要			（剩余: ?A ?A ?K ?J ?J ?10 ?8 ?6 ?4 ?4 ?3 ?3）
+                // 【情敌三千 (农民2)】	不要			（剩余: ?2 ?K ?K ?J ?10 ?4 ?4 ?3 ?3）
+                // 【寂寞喝杯酒 (地主)】	?2	（赢）
+
+
+                //             -- 会员行为
+                // PLAYER_CALLDZ = 21,     -- 叫地主
+                // PLAYER_ROBDZ = 22,      -- 抢地主
+                // PLAYER_QUDIPAI = 23,     -- 取底牌
+                // PLAYER_DOUBLE = 24,     -- 加倍
+                // PLAYER_SHOW_CARD = 25,  -- 明牌
+                // PLAYER_CARD = 26,       -- 会员出牌
+                // PLAYER_PASS = 27,       -- 会员不要
+
+
+                // 步骤
+                for (var i = 0; i < data.record.act.length; i++) {
+                    var ty = data.record.act[i].ty;
+                    var pos = data.record.act[i].pos;
+                    switch(ty){
+                        case 21:
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">'+ (data.record.act[i].param ? "叫地主" : "不叫" )+'</td>');
+                            break;
+                        case 22:
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">抢地主</td>');
+                            break;   
+                        case 23:
+                            var diPaiStr = "" , holeCardStr = "";
+                            var DiPai = data.record.act[i].DiPai;
+                            var holeCard = data.record.act[i].holeCard;
+
+                            DiPai = cartSort(DiPai);
+                            holeCard = cartSort(holeCard);
+
+                            for (var j = 0; j < DiPai.length; j++) {
+                                diPaiStr += indexToCard2(DiPai[j]) + " ";
+                            }
+
+                            for (var j = 0; j < holeCard.length; j++) {
+                                holeCardStr += indexToCard2(holeCard[j]) + " ";
+                            }
+                            userData[pos].cards = holeCardStr;
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">取底牌: '+diPaiStr+'  <span style="margin-left:60px">( 剩余： '+holeCardStr+')</span></td>');
+                            break;   
+                        case 24:
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">加倍</td>');
+                            break;   
+                        case 25:
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">明牌</td>');
+                            break;
+                        case 26:
+                        case 27:
+                            var cardStr = "" , holeCardStr = "";
+                            var card = data.record.act[i].card;
+                            var holeCard = data.record.act[i].holeCard;
+
+                            card = cartSort(card);
+                            holeCard = cartSort(holeCard);
+
+                            for (var j = 0; j < card.length; j++) {
+                                cardStr += indexToCard2(card[j]) + " ";
+                            }
+
+                            for (var j = 0; j < holeCard.length; j++) {
+                                holeCardStr += indexToCard2(holeCard[j]) + " ";
+                            }
+
+                            userData[pos].cards = holeCardStr;
+
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">'+( ty == 26 ? "出牌" : "压牌" )+': '+cardStr+ (holeCardStr ? " <span style='margin-left:60px'>( 剩余：" +holeCardStr +")" : "") +'</span></td>');
+                            break;
+                        case 28:
+                            $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[pos].name +'】</td><td colspan="3">不要  <span style="margin-left:60px">( 剩余： '+userData[pos].cards+')</span></td>');
+                            break; 
+                    }
+                }
+                // dl庄的座位号
+                $("#mb_tbody").append('<tr style="'+(record.pos_id == pos ? "color:green" : "" )+'"><td>'+(data.record.dl == pos ? "地主" : "农民"+userData[pos].index)+'【'+userData[data.record.dl].name +'】</td><td colspan="3">'+(data.record.act[data.record.act.length -1 ].lordWin ? "赢" : "输")+'</td>');
+                $("#mb_tbody").append('<tr><td>系统抽水：</td><td colspan="3">'+parseFloat(record.deduct / 100).toFixed(2)+'</td>');
+                
+                for (var i = 0; i < data.record.att.length; i++) {
+                    $("#mb_tbody").append('<tr style="'+(record.pos_id == data.record.att[i].pos ? "color:green" : "" )+'"><td>会员输赢：<b>'+ data.record.att[i].name+'</b> </td><td colspan="3">'+parseFloat(data.record.att[i].changes / 100).toFixed(2)+'</td>');
+                }
+                
+            }
+        }
+       
+        var ACTION = {
+          "kpqznn":{ // 看牌抢庄牛牛
+            qz:3, //抢庄
+            xz:5,  //下注
+            HAND_VALUE:{
+                CARD0 : "没牛",
+                CARD1 : "牛一",
+                CARD2 : "牛二",
+                CARD3 : "牛三",
+                CARD4 : "牛四",
+                CARD5 : "牛五",
+                CARD6 : "牛六",
+                CARD7 : "牛七",
+                CARD8 : "牛八",
+                CARD9 : "牛九",
+                CARD10 : "牛牛",
+                CARD11 : "四花牛",
+                CARD12 : "五花牛",
+                CARD13 : "四炸",
+                CARD14 : "五小牛",
+            }
+          },
+          "qznn":{ // 抢庄牛牛
+            qz:2, //抢庄
+            xz:4,  //下注
+            HAND_VALUE:{
+                CARD0 : "没牛",
+                CARD1 : "牛一",
+                CARD2 : "牛二",
+                CARD3 : "牛三",
+                CARD4 : "牛四",
+                CARD5 : "牛五",
+                CARD6 : "牛六",
+                CARD7 : "牛七",
+                CARD8 : "牛八",
+                CARD9 : "牛九",
+                CARD10 : "牛牛",
+                CARD11 : "四花牛",
+                CARD12 : "五花牛",
+                CARD13 : "四炸",
+                CARD14 : "五小牛",
+            }
+          },
+          "ebg" : { // 二八杠
+            qz:2, //抢庄
+            xz:4,  //下注
+            HAND_VALUE:{
+                CARD0 : "鳖十",
+                CARD1 : "一点",
+                CARD2 : "两点",
+                CARD3 : "三点",
+                CARD4 : "四点",
+                CARD5 : "五点",
+                CARD6 : "六点",
+                CARD7 : "七点",
+                CARD8 : "八点",
+                CARD9 : "九点",
+                CARD11 : "一点半",
+                CARD12 : "二点半",
+                CARD13 : "三点半",
+                CARD14 : "四点半",
+                CARD15 : "五点半",
+                CARD16 : "六点半",
+                CARD17 : "七点半",
+                CARD18 : "八点半",
+                CARD19 : "九点半",
+                CARD20 : "二八杠",
+                CARD21 : "一对子",
+                CARD22 : "二对子",
+                CARD23 : "三对子",
+                CARD24 : "四对子",
+                CARD25 : "五对子",
+                CARD26 : "六对子",
+                CARD27 : "七对子",
+                CARD28 : "八对子",
+                CARD29 : "九对子",
+                CARD30 : "白皮对",
+            },
+          },
+          "ttz" : { // 推筒子
+            qz:2, //抢庄
+            xz:4,  //下注
+            HAND_VALUE:{
+                CARD0 : "零点",
+                CARD1 : "一点",
+                CARD2 : "二点",
+                CARD3 : "三点",
+                CARD4 : "四点",
+                CARD5 : "五点",
+                CARD6 : "六点",
+                CARD7 : "七点",
+                CARD8 : "八点",
+                CARD9 : "九点",
+                CARD11 : "一点半",
+                CARD12 : "二点半",
+                CARD13 : "三点半",
+                CARD14 : "四点半",
+                CARD15 : "五点半",
+                CARD16 : "六点半",
+                CARD17 : "七点半",
+                CARD18 : "八点半",
+                CARD19 : "九点半",
+                CARD20 : "二八杠",
+                CARD21 : "一对子",
+                CARD22 : "二对子",
+                CARD23 : "三对子",
+                CARD24 : "四对子",
+                CARD25 : "五对子",
+                CARD26 : "六对子",
+                CARD27 : "七对子",
+                CARD28 : "八对子",
+                CARD29 : "九对子",
+                CARD30 : "白皮对",
+            },
+          },
+          "qzpj":{ // 抢庄牌九
+                qz:2, //抢庄
+                xz:5,  //下注
+                HAND_VALUE:{
+                    CARD0 : "零点",
+                    CARD1 : "一点",
+                    CARD2 : "二点",
+                    CARD3 : "三点",
+                    CARD4 :  "四点",
+                    CARD5 :  "五点",
+                    CARD6 :  "六点",
+                    CARD7 :  "七点",
+                    CARD8 :  "八点",
+                    CARD9 :  "九点",
+                    CARD10 :  "地高九",
+                    CARD11 :  "天高九",
+                    CARD12 :  "地杠",
+                    CARD13 :  "天杠",
+                    CARD14 :  "地王",
+                    CARD15 :  "天王",
+                    CARD16 :  "杂五",
+                    CARD17 :  "杂七",
+                    CARD18 :  "杂八",
+                    CARD19 :  "杂九",
+                    CARD20 :  "双零霖",
+                    CARD21 :  "双高脚",
+                    CARD22 :  "双红头",
+                    CARD23 :  "双斧头",
+                    CARD24 :  "双板凳",
+                    CARD25 :  "双长三",
+                    CARD26 :  "双梅",
+                    CARD27 :  "双鹅",
+                    CARD28 :  "双人",
+                    CARD29 :  "双地",
+                    CARD30 :  "双天",
+                    CARD31 :  "至尊",
+                }
+            },
+            "sg":{ // 三公
+                qz:2, //抢庄
+                xz:4,  //下注
+                HAND_VALUE:{
+                    CARD12 : "爆玖",
+                    CARD11 : "炸弹",
+                    CARD10 : "三公",
+                    CARD9 : "九点",
+                    CARD8 : "八点",
+                    CARD7 : "七点",
+                    CARD6 : "六点",
+                    CARD5 : "五点",
+                    CARD4 : "四点",
+                    CARD3 : "三点",
+                    CARD2 : "二点",
+                    CARD1 : "一点",
+                    CARD0 : "零点",
+                }
+            },
+            "yyl" :{ // 摇摇乐
+                qz:0, //无抢庄
+                xz:3,  //下注
+                HAND_VALUE : {
+                    CARD1 : "红",
+                    CARD2 : "蓝",
+                    CARD3 : "和",
+                    CARD4 : "红对子",
+                    CARD5 : "蓝对子",
+                    CARD6 : "红顺子",
+                    CARD7 : "蓝顺子",
+                    CARD8 : "红豹子",
+                    CARD9 : "蓝豹子",
+                }
+            },
+            "brzjh" :{ // 百人炸金花
+                qz:0, //无抢庄
+                xz:3,  //下注
+                HAND_VALUE : {
+                    CARD1 : "高牌",
+                    CARD2 : "对子",
+                    CARD3 : "顺子",
+                    CARD4 : "金花",
+                    CARD5 : "同花顺",
+                    CARD6 : "豹子",
+                }
+            },
+            "brnn" :{ // 百人牛牛
+                qz:0, //无抢庄
+                xz:4,  //下注
+                HAND_VALUE : {
+                    CARD1 : "天",
+                    CARD2 : "地",
+                    CARD3 : "玄",
+                    CARD4 : "黄",
+                }
+            },
+            "brdz" :{ // 百人德州
+                qz:0, //无抢庄
+                xz:4,  //下注
+                HAND_VALUE : {
+                    CARD1 : "红",
+                    CARD2 : "蓝",
+                    CARD3 : "和",
+                    CARD4 : "红对子",
+                    CARD5 : "蓝对子",
+                    CARD6 : "红顺子",
+                    CARD7 : "蓝顺子",
+                    CARD8 : "红豹子",
+                    CARD9 : "蓝豹子",
+                }
+            },
+            "bjl" : {
+                qz:0, //无抢庄
+                xz:3,  //下注
+                HAND_VALUE :  { // 百家乐
+                    CARD1 : "庄",
+                    CARD2 : "闲",
+                    CARD3 : "和",
+                }
+            },
+            "lh" : {
+                qz:0, //无抢庄
+                xz:3,  //下注
+                HAND_VALUE :  { // 龙虎
+                    CARD1 : "龙",
+                    CARD2 : "虎",
+                    CARD3 : "和",
+                    CARD4 : "龙黑桃",
+                    CARD5 : "龙红桃",
+                    CARD6 : "龙梅花",
+                    CARD7 : "龙方块",
+                    CARD8 : "虎黑桃",
+                    CARD9 : "虎红桃",
+                    CARD10 : "虎梅花",
+                    CARD11 : "虎方块",
+                    CARD12 : "压庄赢",
+                    CARD13 : "压庄输",
+                }
+            },
+            "sss" : { // 十三水
+                qz:0, //无抢庄
+                xz:0,  //下注
+            },
+            "esyd" : { // 21点
+                qz:0, //无抢庄
+                xz:0,  //无下注
+                fp:3,  //发牌
+            },
+            "tb" : {
+                qz:0, //无抢庄
+                xz:3,  //下注
+                HAND_VALUE :  { // 骰宝
+                    CARD0 : "无",
+                    CARD1 : "大",
+                    CARD2 : "小",
+                    CARD3 : "单",
+                    CARD4 : "双",
+                    CARD10 : "任意豹子",
+                    CARD11 : "豹子1",
+                    CARD12 : "豹子2",
+                    CARD13 : "豹子3",
+                    CARD14 : "豹子4",
+                    CARD15 : "豹子5",
+                    CARD16 : "豹子6",
+                    CARD44 : "点数4",
+                    CARD45 : "点数5",
+                    CARD46 : "点数6",
+                    CARD47 : "点数7",
+                    CARD48 : "点数8",
+                    CARD49 : "点数9",
+                    CARD50 : "点数10",
+                    CARD51 : "点数11",
+                    CARD52 : "点数12",
+                    CARD53 : "点数13",
+                    CARD54 : "点数14",
+                    CARD55 : "点数15",
+                    CARD56 : "点数16",
+                    CARD57 : "点数17",
+                }
+            },
+            "ddz" : {
+                jdz:21, //叫地主
+                qdz:22,  //抢地主
+                qdp:23,  //取底牌
+                jb:24,  //加倍
+                mp:25,  //明牌
+                cp:26,  //会员出牌
+                by:27,  //会员不要
+            }
+        }
+
+        // 数字对应的牌面值
+        var CART_VALUE = {
+            CARD0 : "1",
+            CARD1 : "2",
+            CARD2 : "3",
+            CARD3 : "4",
+            CARD4 : "5",
+            CARD5 : "6",
+            CARD6 : "7",
+            CARD7 : "8",
+            CARD8 : "9",
+            CARD9 : "10",
+            CARD10 : "J",
+            CARD11 : "Q",
+            CARD12 : "K",
+            CARD13 : "A",
+
+            CARD15 : "小王",
+            CARD16 : "大王",
+
+        }
+
+        var CARD_SUIT = {
+            SUIT1 : "黑桃",
+            SUIT2 : "红桃",
+            SUIT3 : "梅花",
+            SUIT4 : "方块",
+            SUIT5 : "猴", // 大王小王
+        }
+
+        var CARD_SUIT2 = {
+            SUIT1 : "<span style='color:block'>♠</span>",
+            SUIT2 : "<span style='color:red'>♥</span>",
+            SUIT3 : "<span style='color:block'>♣</span>",
+            SUIT4 : "<span style='color:red'>♦</span>",
+            SUIT5 : "", // 大王小王
+        }
+
+        /**
+         * 将数字转换位相应的牌行
+         **/
+        function indexToCardType(gameType , index){
+            var rank = ( (index - 1) % 13 ) + 1 ; // 牌
+            return (ACTION[gameType].HAND_VALUE["CARD" + rank] || "/");
+        }
+
+         /**
+         * 将数字转换位相应的牌行
+         **/
+         function ttzIndexToCardType(gameType , index){
+            return (ACTION[gameType].HAND_VALUE["CARD" + index] || "/");
+        }
+        
+
+        $("#clear").click(function() {
+            $("#s_game_id").val('0')
+            $("#s_room_id").val("0")
+            $("#s_username").val("")
+            $("#s_game_no").val("")
+            $("#s_platform_id").val('0')
+            // $("#e_platform_id").val('')
+            // $("#e_platform_name").val('')
+            form.render()
+        })
+        
+        /**
+         * 将数字转换位相应的牌值
+         **/
+         function indexToCard(index){
+            var rank = ( (index - 1) % 13 ) + 1 ; // 牌
+            var suit = Math.ceil(index / 13); // 花色
+            return (CARD_SUIT["SUIT" + suit] || "") + (CART_VALUE["CARD" + rank] || "/");
+        }
+
+        /**
+         * 将牌值转成对应的数字
+         **/
+        function indexToCard2(index){
+            var rank = ( (index - 1) % 13 ) + 1 ; // 牌
+            var suit = Math.ceil(index / 13); // 花色
+            if(suit == 5 && rank == 1){
+                rank = 15;
+            }else if( suit == 5 && rank == 2 ){
+                rank = 16;
+            }
+            return (CARD_SUIT2["SUIT" + suit] || "") + (CART_VALUE["CARD" + rank] || "/");
+        }
+
+        /**
+         * 将牌排序
+         **/
+        function cartSort(cardArr){
+            return cardArr.sort(function(x,y){
+                var a = {
+                    rank:( (x - 1) % 13 ) + 1 , // 牌
+                    suit:Math.ceil(x / 13) // 花色
+                }
+                var b = {
+                    rank:( (y - 1) % 13 ) + 1 , // 牌
+                    suit:Math.ceil(y / 13) // 花色
+                }
+                var flag = ddzCardCompare(a,b);
+                return flag ? -1 : 1;
+            })
+        }
+
+        // 斗地主牌大小比较函数（从大到小，先比点数再比花色，大王>小王>2>A>K>...>3）
+        function ddzCardCompare( a, b ){
+            if (a.suit < 5 && b.suit < 5 && a.rank != b.rank){
+                if (a.rank == 1 ){
+                    return true
+                }
+                if (b.rank == 1){
+                    return false
+                }
+            }
+          
+            return defaultCardCompare(a, b)
+        }
+
+        // 默认牌大小比较函数（从大到小，先比点数再比花色，大王>小王>A>K>...>2）
+        function defaultCardCompare( a, b ){
+            if (a.suit == 5 || b.suit == 5){
+                if (a.suit == b.suit ){
+                    return a.rank > b.rank
+                }
+                return a.suit > b.suit
+            }
+
+            if (a.rank == b.rank) return a.suit < b.suit ;
+
+            if (a.rank == 13) return true ;
+
+            if (b.rank == 13) return false ;
+
+            return a.rank > b.rank
+        }
+
+        function ttzIndexTocard(index){
+            console.log(index, ((index - 1 % 10) + 1) );
+            return (index - 1 % 10) + 1;
+            // return (ACTION[gameType].HAND_VALUE["CARD" + rank] || "/");
+        }  
+        function seeGameNO(game_no){
+            layer.open({
+            type: 1,
+            title:'牌局编号',
+            skin: 'layui-layer-demo', //样式类名
+            area: ['300px', '120px'], //宽高
+            content:`<div>
+                      <div class="copy_cont" style="text-align: center;margin:10px 0px" >${game_no}</div>
+                      <button class="js-clipboard layui-btn layui-btn-sm" style="margin: 0 auto;display: block" data-clipboard-target=".copy_cont">复制</button>
+                  </div>`
+            });
+
+        }
+        
+        function dateFomat(date) {
+            let year = date.getFullYear();
+            let mon = date.getMonth() + 1;
+            let day = date.getDate();
+            let hour = date.getHours().toString().padStart(2, 0);
+            let minute = date.getMinutes().toString().padStart(2, 0);
+            let second = date.getSeconds().toString().padStart(2, 0);
+            return `${year}-${mon}-${day} ${hour}:${minute}:${second}`;
+        }
+    </script>      
+</html>

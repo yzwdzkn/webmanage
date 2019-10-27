@@ -1,0 +1,588 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Title -->
+    <title><%=title%></title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/public/admin/img/core-img/favicon.ico">  
+    <!-- layui  -->
+    <link rel="stylesheet" href="/public/admin/static/layui/css/layui.css">
+
+    <!-- Master Stylesheet [If you remove this CSS file, your file will be broken undoubtedly.] -->
+    <link rel="stylesheet" href="/public/admin/css/style.css">
+</head>
+
+<body>
+    <!-- Preloader -->
+    <div id="preloader"></div>
+
+    <!-- ======================================
+    ******* Page Wrapper Area Start **********
+    ======================================= -->
+    <!-- Page Content -->
+    <!-- Main Content Area -->
+    <div style="margin: 5px 8px;" class="layui-tab layui-tab-brief" lay-filter="totalData">
+        <ul class="layui-tab-title">
+            <li class="layui-this" lay-id="1")>会员活跃人数</li>
+            <li lay-id="2">新增人数</li>
+            <li lay-id="3">游戏24小时在线</li>
+            <li lay-id="4">游戏日抽水</li>
+            <li lay-id="5">投注次数</li>
+            <li lay-id="6">投注分数</li>
+            <li lay-id="7">玩家输赢</li>
+        </ul>
+        <div class="layui-tab-content" style="background-color: #fff;">
+            <div class="layui-tab-item layui-show" >
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                          
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1">会员活跃人数</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="start_time" placeholder="开始时间"/>
+                                <span class="layui-col-md1" style="text-align: center;">-</span>
+                                <input type="text" class="layui-input-inline layui-col-md1" id="end_time" placeholder="结束时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay1">搜索</button>
+                            </div>
+                           
+                            <div class="c3-chart">
+                                <div id="qx_chart_2" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1" >新增人数</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="start_time2" placeholder="开始时间"/>
+                                <span class="layui-col-md1" style="text-align: center;">-</span>
+                                <input type="text" class="layui-input-inline layui-col-md1" id="end_time2" placeholder="结束时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay2">搜索</button>
+                            </div>
+                            <div class="c3-chart">
+                                <div id="xz_chart" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <h4 class="card-title mb-30">游戏24小时在线</h4>
+                            <div class="c3-chart">
+                                <div id="online_numbers" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1">游戏日抽水</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="date4" placeholder="搜索时间时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay4">搜索</button>
+                            </div>
+                            <div class="c3-chart">
+                                <div id="pump_number" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1">投注次数</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="date5" placeholder="搜索时间时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay5">搜索</button>
+                            </div>
+                            <div class="c3-chart">
+                                <div id="game_bet_count" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1" >投注分数</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="date6" placeholder="搜索时间时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay6">搜索</button>
+                            </div>
+                            <div class="c3-chart">
+                                <div id="game_bet_number" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="card bg-boxshadow mb-30">
+                    <div class="card-body" >
+                        <div class="c3-chart-area">
+                            <div class="layui-row">
+                                <h4 class="card-title mb-30 layui-col-md1">玩家输赢</h4>
+                                <input type="text" class="layui-input-inline layui-col-md1 layui-col-md-offset7" id="date7" placeholder="搜索时间时间"/>
+                                <button class="layui-btn" style="margin-left:30px;" id="lay7">搜索</button>
+                            </div>
+                            <div class="c3-chart">
+                                <div id="lost_win_number" style="height:500px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>       
+    </div>
+
+    <!-- ======================================
+    ********* Page Wrapper Area End ***********
+    ======================================= -->
+
+    <!-- Must needed plugins to the run this Template -->
+    <script src="/public/admin/js/jquery.min.js"></script>
+    <script src="/public/admin/js/popper.min.js"></script>
+    <script src="/public/admin/js/bootstrap.min.js"></script>
+    <script src="/public/admin/js/admetro.bundle.js"></script>
+
+    <!-- These plugins only need for the run this page -->
+    <script src="/public/admin/js/echart-basic.js"></script>
+    <script src="/public/admin/js/echarts.js"></script>
+    <!-- <script src="/public/admin/js/basic-script.js"></script> -->
+    <!-- <script src="/public/admin/js/custom.js"></script> -->
+
+    <!-- Active JS -->
+    <script src="/public/admin/js/active.js"></script>
+    <script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <!-- layui js -->
+    <script src="/public/admin/static/layui/layui.js"></script>
+    <!-- layui js -->
+    <script src="/public/admin/static/layui/layui.js"></script>
+    <script src="/public/admin/js/tabsIframeClose.js"></script>
+
+    <script>
+        let layer, element, laydate;
+      
+        $(function() {
+            // Initialize after dom ready
+            var echartsWindow = $(window);
+            let tabId;
+            layui.use(['element', 'layer', 'laydate'], function () {
+                element = layui.element;
+                layer = layui.layer;
+                laydate = layui.laydate;
+                element.on('tab(totalData)', function (data) {
+                    tabId = this.getAttribute('lay-id');
+                    switch(tabId) {
+                        case '1': onlineNumberByMonth(1);break;
+                        case '2': registerNum(1);break;
+                        case '3': get24HoursNum(1);break;
+                        default: getOnlineNumberByMonth(tabId, 1);
+                    }
+                });
+                onlineNumberByMonth(1);
+                $('#lay1').click(function() {
+                    onlineNumberByMonth();
+                });
+                $('#lay2').click(function() {
+                    registerNum();
+                });
+                $('#lay4').click(function() {
+                    getOnlineNumberByMonth(tabId);
+                });
+                $('#lay5').click(function() {
+                    getOnlineNumberByMonth(tabId);
+                });
+                $('#lay6').click(function() {
+                    getOnlineNumberByMonth(tabId);
+                });
+                $('#lay7').click(function() {
+                    getOnlineNumberByMonth(tabId);
+                });
+            });
+
+            echartsWindow.on('resize', function () {
+                if (chartBasic != null && chartBasic != undefined) {
+                    chartBasic.resize();
+                }
+            });            
+        });
+
+        // 会员活跃人数
+        function onlineNumberByMonth(first) {
+            let startDate;
+            let endDate;
+            if (first) {
+                endDate =  new Date();
+                startDate = new Date(endDate.getTime() - 1000 * 60 * 60 * 24 *30);
+                laydate.render({
+                    elem: '#start_time', //指定元素
+                    value: startDate,
+                });
+                laydate.render({
+                    elem: '#end_time', //指定元素
+                    value: endDate,
+                });
+            } else {
+                startDate = $('#start_time').val();
+                endDate = $('#end_time').val();
+            }
+            $.ajax({
+                url: "/admin/gameDataManage/totalData/onlineNumberByMonth",
+                type: "GET",
+                data: {
+                    startDate,
+                    endDate,
+                    _csrf: $("#_csrf").val()
+                },
+                timeout: 60000, //1分钟
+                success: function (data) {
+                    var option = {
+                        title: {
+                            text: '会员活跃人数',
+                        },
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data: ['活跃人数']
+                        },
+                        calculable: true,
+                        xAxis: [
+                            {
+                                name: '时间',
+                                type: 'category',
+                                data: data.data.day
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value',
+                                axisLabel: {
+                                    formatter: '{value}人'
+                                }
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '活跃人数',
+                                type: 'line',
+                                data: data.data.value,
+                            }
+                        ]
+                    }
+                    var qxBasic_2 = echarts.init(document.getElementById('qx_chart_2'));
+                    qxBasic_2.setOption(option)
+                },
+                error: function (xhr, status, error) {
+                    console.log("[ERROR] - ", error);
+                }
+            })
+        }
+
+        // 新增人数
+        function registerNum(first) {
+            if (first) {
+                let date;
+                laydate.render({
+                    elem: '#start_time2', //指定元素
+                    value: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 *30),
+                });
+                laydate.render({
+                    elem: '#end_time2', //指定元素
+                    value: new Date()
+                });
+            }
+            let startDate = $('#start_time2').val();
+            let endDate = $('#end_time2').val();
+            $.ajax({
+                url: "/admin/gameDataManage/totalData/registerNum",
+                type: "GET",
+                data: {
+                    startDate,
+                    endDate,
+                    _csrf: $("#_csrf").val()
+                },
+                timeout: 60000, //1分钟
+                success: function (data) {
+                    var option = {
+                        title: {
+                            text: '新增玩家数据分析',
+                        },
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data: ['新增玩家数据分析']
+                        },
+                        calculable: true,
+                        xAxis: [
+                            {
+                                name: '时间',
+                                // type: 'category',
+                                data: data.data.days
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value',
+                                axisLabel: {
+                                    formatter: '{value}人'
+                                }
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '新增玩家数据分析',
+                                type: 'line',
+                                data: data.data.total,
+                            }
+                        ]
+                    }
+                    var qxBasic_2 = echarts.init(document.getElementById('xz_chart'));
+                    qxBasic_2.setOption(option)
+                },
+                error: function (xhr, status, error) {
+                    console.log("[ERROR] - ", error);
+                }
+            })
+        }
+
+
+        // 游戏24小时在线
+        function get24HoursNum(){
+            let myChart = echarts.init($('#online_numbers')[0]);
+             //showLoading遮盖层显示
+            myChart.showLoading({
+                text: '数据正在努力加载...',
+                textStyle: { fontSize : 30 , color: '#444' },
+                effectOption: {backgroundColor: '#DDDDDD'}
+            }); 
+            $.ajax({
+                url:"/admin/gameDataManage/gameOverview/get24HoursNum",
+                type:"GET",
+                data:{
+                    _csrf:$("#_csrf").val()
+                },
+                timeout:60000, //1分钟
+                success:function(data){
+                    // 游戏24小時在線 start
+                    var seriesArr = [];
+                    const selected = {};
+                    for (const games in data.data.online) {
+                        if (games !== 'craeteTime'){
+                            seriesArr.push({ name: games, type: 'line', data: data.data.online[games] });
+                        }
+                        if (games !== '全部') {
+                            selected[games] = false;
+                        }
+                    }
+                    var onlineOption = {
+                        // title : { text: '游戏24小時在線',},
+                        tooltip : {trigger: 'axis'},
+                        legend: {
+                            data: data.data.gameList,
+                            selected,
+                        },
+                        calculable : true,
+                        xAxis : [{
+                            name:'时间',type : 'category',boundaryGap : false,
+                            data : data.data.time,
+                        }],
+                        yAxis : [{type : 'value',axisLabel : {formatter: '{value}人'}}],
+                        series: seriesArr
+                    }
+                    var online = echarts.init(document.getElementById('online_numbers'));
+                    online.setOption(onlineOption);
+                    // end
+                    //showLoading遮盖层隐藏
+                    myChart.hideLoading();
+                   
+                   
+                    
+                },error: function(xhr, status, error){
+                    console.log("[ERROR] - ",error);
+                    //showLoading遮盖层隐藏
+                    myChart.hideLoading();
+                }
+            })
+        }
+
+        function getOnlineNumberByMonth(tabId, first) {
+            if (first) {
+                let date;
+                laydate.render({
+                    elem: `#date${tabId}`, //指定元素
+                    value: new Date()
+                });
+            }
+            let date = $(`#date${tabId}`).val();
+            $.ajax({
+            url:"/admin/gameDataManage/gameOverview/initData",
+            type:"GET",
+            data:{
+                date,
+                _csrf:$("#_csrf").val()
+            },
+            timeout:60000, //1分钟
+            success:function(data){
+                // 游戏24小時在線 start
+                // var seriesArr = [];
+                // for (const games in data.data.online) {
+                //     if (games !== 'craeteTime'){
+                //         seriesArr.push({ name: games, type: 'line', data: data.data.online[games] });
+                //     }
+                   
+                // }
+                // var onlineOption = {
+                //     // title : { text: '游戏24小時在線',},
+                //     tooltip : {trigger: 'axis'},
+                //     legend: {data: data.data.gameList },
+                //     calculable : true,
+                //     xAxis : [{
+                //         name:'时间',type : 'category',boundaryGap : false,
+                //         data : data.data.time,
+                //     }],
+                //     yAxis : [{type : 'value',axisLabel : {formatter: '{value}人'}}],
+                //     series:seriesArr
+                // }
+                // var online = echarts.init(document.getElementById('game_bet'));
+                // online.setOption(onlineOption);
+                // end
+
+                // 遊戲日抽水 start
+                var pumpSeriesArr = [];
+                for (const games in data.data.pump) {
+                    if (games !== 'date'){
+                        pumpSeriesArr.push({ name: games, type: 'line', data: data.data.pump[games].map(function(value,index){
+                            return value/100;
+                        }) });
+                        
+                    }
+                   
+                }
+                var pumpOption = {
+                    // title : { text: '遊戲日抽水',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gameList },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.dates
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}金币'}}],
+                    series:pumpSeriesArr
+                }
+                var pump = echarts.init(document.getElementById('pump_number'));
+                pump.setOption(pumpOption);
+                // end
+
+                // 投注次数 start
+                var betCountSeriesArr = [];
+                for (const games in data.data.betCount) {
+                    if (games !== 'date'){
+                        betCountSeriesArr.push({ name: games, type: 'line', data: data.data.betCount[games] });
+                    }
+                   
+                }
+                var gameBetCountOption = {
+                    // title : { text: '投注次数',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gameList },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.dates
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}次'}}],
+                    series:betCountSeriesArr
+                }
+                var gameBetCount = echarts.init(document.getElementById('game_bet_count'));
+                gameBetCount.setOption(gameBetCountOption);
+                // end
+
+
+                // 投注分数 start
+                var betNumSeriesArr = [];
+                for (const games in data.data.betNum) {
+                    if (games !== 'date'){
+                        betNumSeriesArr.push({ name: games, type: 'line', data: data.data.betNum[games].map(function(value,index){
+                            return value/100;
+                        }) });
+                    }
+                   
+                }
+                var betNumOption = {
+                    // title : { text: '投注分数',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gameList },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.dates
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}金币'}}],
+                    series:betNumSeriesArr
+                }
+                var betNum = echarts.init(document.getElementById('game_bet_number'));
+                betNum.setOption(betNumOption);
+                // end
+
+                // 输赢分数 start
+                var lostWinGoldSeriesArr = [];
+                for (const games in data.data.gold) {
+                    if (games !== 'date'){
+                        lostWinGoldSeriesArr.push({ name: games, type: 'line', data: data.data.gold[games].map(function(value,index){
+                            return value/100;
+                        }) });
+                    }
+                   
+                }
+                var lostWinGoldOption = {
+                    // title : { text: '输赢分数',},
+                    tooltip : {trigger: 'axis'},
+                    legend: {data: data.data.gameList },
+                    calculable : true,
+                    xAxis : [{
+                        name:'时间',type : 'category',boundaryGap : false,
+                        data : data.data.dates
+                    }],
+                    yAxis : [{type : 'value',axisLabel : {formatter: '{value}金币'}}],
+                    series:lostWinGoldSeriesArr
+                }
+                var lostWinGold = echarts.init(document.getElementById('lost_win_number'));
+                lostWinGold.setOption(lostWinGoldOption);
+                // end
+                
+            },error: function(xhr, status, error){
+                console.log("[ERROR] - ",error);
+            }
+        })
+    }
+   
+    </script>      
+</body>
+
+</html>
