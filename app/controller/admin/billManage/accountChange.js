@@ -12,7 +12,6 @@ class AccountChangeController extends Controller {
   }
   async list() {
     const params = this.ctx.query;
-    console.log('---------',params)
     const result = await this.service.orders.findList(params);
     this.ctx.body = {
       data: result.rows,
